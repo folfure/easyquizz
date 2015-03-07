@@ -1,0 +1,183 @@
+<head>    
+    <meta charset="utf-8">
+    <script type="text/javascript">
+      var ws;
+      
+      function createChatEntry(username, message) {
+        var entry = document.createElement("div");
+        entry.class = "chat_entry";
+        
+        var dom_uname = document.createElement("span");
+        dom_uname.class = "chat_username";
+        dom_uname.innerHTML = username+": ";
+        entry.appendChild(dom_uname);
+        
+        var dom_msg = document.createElement("span");
+        dom_msg.class = "chat_message";
+        dom_msg.innerHTML = message;
+        entry.appendChild(dom_msg);
+        
+        return entry;
+      }
+      
+      function openWS(messageContainer) {
+        ws = new WebSocket("ws://192.168.0.107:8888/ws_buzz");
+        ws.onmessage = function(e) {
+          var data = JSON.parse(e.data);
+          messageContainer.appendChild(createChatEntry(data.author, data.message));
+        };
+        ws.onclose = function(e) {
+          openWS(messageContainer);
+        };
+      }
+      
+      function sendMessage() {
+        var data = { author: document.getElementById("username").value,
+                     message: document.getElementById("message").value };
+        
+        if(data.author && data.message) {
+          ws.send(JSON.stringify(data));
+        }
+      }
+      
+      window.onload = function() {
+        var messageContainer = document.getElementById("chat");
+        if("WebSocket" in window) {
+          messageContainer.appendChild(createChatEntry("[SYSTEM]", "WebSocket is supported by your browser!"));
+          messageContainer.appendChild(createChatEntry("[SYSTEM]", "Pick a username and start sending out messages."));
+          openWS(messageContainer);
+        }
+        else {
+          messageContainer.appendChild(createChatEntry("[SYSTEM]", "WebSocket is NOT supported by your browser!"));
+        }
+      }
+    </script>
+<script src="static/js/vendor/jquery.1.11.min.js"></script>
+<style>
+body 
+{
+    /*background-color: #36606C;*/
+    background: black;
+    color:white;   
+    font-family:Lato; 
+
+}
+.section_title{
+    font-family:Lato-Hairline;
+    font-size:60pt;
+    -webkit-transition-property: left, right;
+    -webkit-transition-duration: 0.5s;
+}
+.section_title span{
+    font-family:Lato; 
+    font-size:120pt;
+    color:white;
+    opacity:0.4;
+    font-weight:normal;
+}
+.text_question {
+    text-align: center;
+    color: white;
+    font-size:80pt;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+</style>
+<script>
+
+var section = %(section_id)d;
+var question = %(question_id)d;
+
+var questions = [%(questions)s];
+
+$(function()
+{
+$(document).mousedown(function(event) {
+    switch (event.which) 
+    {
+        case 1:
+            //next question or next section
+            if (question+1>%(max_question)d)
+            {
+                if (section==%(max_section)d)
+                {
+                    //last question of the quizz
+                    //we don't do anything yet
+                    return;
+                } 
+                else
+                {
+                    window.location.href = location.protocol + '//' + location.host + location.pathname + '?section='+(section+1)+'&question=0';
+                    return;
+                }  
+            }
+            else
+            {
+                question+=1;
+            }
+            break;
+        case 2:
+            alert('Middle Mouse button pressed.');
+            return;
+        case 3:
+            //previous question or previous section
+            if (question-1<0)
+            {
+                if (section==0)
+                {
+                    //first question of the quizz
+                    //we don't do anything yet
+                    return;
+                } 
+                else
+                {
+                    window.location.href = location.protocol + '//' + location.host + location.pathname + '?section='+(section-1)+'&question=-1';
+                    return;
+                }  
+            }
+            else
+            {
+                question-=1;
+            }
+            break;
+        default:
+            alert('You have a strange Mouse!');
+
+    }
+    // var elt = document.getElementById('question_fr');
+    // alert(elt.nodeName);
+    var elt = $('#question_fr');
+    var obj = elt.get()[0];
+    // alert(obj.nodeName);
+    if (obj.nodeName == 'VIDEO' || obj.nodeName == 'AUDIO')
+    {
+        elt.attr('src',questions[question]);
+        elt.load();
+    }
+    else if (obj.nodeName == 'DIV')
+    {
+        obj.innerHTML = questions[question];
+    }
+
+    // alert($('#question_id').get()[0].innerHTML);
+
+    $('#question_id').get()[0].innerHTML = question+1;
+
+});
+
+});
+
+
+
+</script>
+</head>
+<body oncontextmenu="return false">
+<div width='800px' height='500px' class="section_title">%(section_title)s <span id="question_id" class='question_id'>%(question_id_disp)s</span></div>
+%(question_html)s
+
+
+</body>

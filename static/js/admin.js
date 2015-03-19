@@ -1,10 +1,4 @@
-
-
-var user_id = null;
-var team = null;
-
-
-function connect_player() 
+function connect_admin() 
 {
 	var scheme = window.location.protocol == 'https:' ? 'wss://' : 'ws://';
 	var defaultAddress = scheme + window.location.host + '/buzz';
@@ -15,8 +9,8 @@ function connect_player()
 	}
 
 	var scheme = window.location.protocol == 'https:' ? 'wss://' : 'ws://';
-	var defaultAddress = scheme + window.location.host + ':80/buzz';
-	var url = defaultAddress+'?user='+user_name; 			//addressBox.value;
+	var defaultAddress = scheme + window.location.host + ':80/adminws';
+	var url = defaultAddress; 			//addressBox.value;
 	addToLog("Connecting to: "+url);
 
 	if ('WebSocket' in window) {
@@ -75,13 +69,12 @@ function connect_player()
 	};
 }
 
-
-function validateSurname()
+function addTeam()
 {
-	if ($("#surname").val() != "" && $("team").val() != "")
+	if ($("#team_entry").val() != "")
 	{
-		user_name = $("#surname").val();
-		team = $("#team :selected").text();
+		var new_team_name = $("#team_entry").val();
+		var myusername = $("#username").val();
 		$.ajax({
 		  type: "get",
 		  url: "game",
@@ -95,28 +88,6 @@ function validateSurname()
 		});
 	}
 }
-
-
-function buzz()
-{
-	if (need_reconnect==true)
-	{
-		connect_player();
-		need_reconnect = false;
-		if (!socket) 
-		{
-			addToLog('Not connected');
-			return;
-		}
-	}
-
-  	socket.send(JSON.stringify({
-  		type :'buzz',
-  		from : user_name,
-  		when : Date.now()/1000
-}));
-}
-
 $(function(){
-	connect_player();	
+	connect_admin();	
 });

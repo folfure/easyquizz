@@ -9,9 +9,10 @@
   <meta name="author" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
-  <link rel="stylesheet" href="static/skeleton/css/normalize.css">
-  <link rel="stylesheet" href="static/skeleton/css/skeleton.css">
-  <link rel="icon" type="image/png" href="static/skeleton/images/favicon.png">
+  <link rel="stylesheet" href="/static/skeleton/css/normalize.css">
+  <link rel="stylesheet" href="/static/skeleton/css/skeleton.css">
+  <link rel="stylesheet" href="/static/css/easyquizz.css">
+  <link rel="icon" type="image/png" href="/static/skeleton/images/favicon.png">
 
 </head>
 <body>
@@ -20,31 +21,32 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <div class="container">
     <h4>{{title}}</h4>
-    <div id="name_form">
-    	<form action="/login" method="post">
-		    <div class="row">
+    <div id="login_form">
+    	<form action="{{post_url}}" method="post">
+		    <div class="row" style="display:{{name_display}}">
 			    <div class="six column">
 			      <label for="surname">Votre nom</label>
-			      <input class="u-full-width" type="text" placeholder="Awesome Guy" name="name">
+            <input class="u-full-width" type="text" placeholder="Awesome Guy" name="name">
+          </div>
+      </div>
+      <div class="row" style="display:{{password_display}}">
+          <div class="six column">
+			      <input class="u-full-width" type="password" placeholder="admin password" name="pwd" >
 			    </div>
-			</div>
-			<div class="row">
+      </div>
+      <div class="row">
 	    		<div class="six column">
 	    			<input type='submit' class="button button-primary" value="Let's play!">
 	    		</div>
 	    	</div>
 		</form>
-    </div>
-          <a class="button button-primary" id="buzz" onclick="buzz()" style="visibility:hidden"><h1>Buzz!</h1></a> 
-
-    </div>
     
 
-    
+      
 
 <!-- End Document
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <script src="static/js/vendor/jquery-2.1.3.min.js"></script>
-  <!--<script src="static/js/easyquizz.js"></script>-->
+  <script src="/static/js/vendor/jquery-2.1.3.min.js"></script>
+  <!--<script src="/static/js/easyquizz.js"></script>-->
 </body>
 </html>

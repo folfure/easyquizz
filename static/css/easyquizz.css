@@ -1,14 +1,41 @@
 
+body {
+  color: #ddd; 
+  background-color: #444;
+}
+
+.noselect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
 
 
-#log
+.buzz
+{
+	border-radius: 50px;
+	border-style: solid;
+	border-color:white ;
+	border-width:5px;
+}
+
+
+.log
 {	
 	background-color: white;
 	width: 95%;
 	height: 200px;
-	border: solid 1px black;
+	/*border: solid 1px black;*/
 	bottom: 10px;
 	left: 30px;
+	color:#555;
+	padding:5px;
+	font-size:1rem;
+	border-radius: 4px;
+	overflow: scroll;
 }
 #start
 {
@@ -19,19 +46,55 @@
 	padding-bottom: 20px;
 	background-color: green;
 }
-#buzz
+
+#user_name
 {
-	width: 200px;
-	height:200px;
-	text-align: center;
-	/*margin-top:50px;*/
-	margin-left:auto;
-	margin-right:auto;
-	padding-top: 50px;
-	padding-bottom: 20px;
-	background-color: red;
-	visibility: hidden;
+	padding: 0 15px;
+	height:50px;
+	line-height: 50px;
+	/*color:#C24E47;*/
+	color:white;
+	background-color:#555; 
+	border-radius:4px;
+	font-weight:600;
+	margin-bottom: 1.5rem;
+	font-size:3.5rem;
+	
 }
+
+
+.team_name, .other_team_name, .team_score, .other_team_score
+{
+	padding: 0 5px;
+	height:20px;
+	border:none;
+	/*line-height: 30px;*/
+	color:#999;
+	/*background-color:#999; */
+	/*border-radius:5px;*/
+	/*margin-bottom: 0.5rem;*/
+	/*font-size:2rem;*/
+	text-align:left;
+
+}
+.team_score, .other_team_score
+{
+
+
+}
+
+.team_score, .team_name
+{
+	/*background-color:#999;*/
+	font-weight:600;
+	color:white;
+}
+.team_name
+{
+
+}
+
+
 .joueur
 {
 	margin: 20px;

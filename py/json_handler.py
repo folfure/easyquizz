@@ -15,7 +15,14 @@ class JsonHandler(tornado.web.RequestHandler):
  
         # Set up response dictionary.
         self.response = dict()
- 
+
+    def get_param(self, arg):
+        try:
+            return self.request.arguments[arg]
+        except:
+            return None
+
+
     def set_default_headers(self):
         self.set_header('Content-Type', 'application/json')
  

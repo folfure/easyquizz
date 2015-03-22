@@ -8,22 +8,23 @@ import py.tools as tools
 import py.json_handler
 import os
 import json
-
+from pprint import pprint
 import sqlite3
+
+
+
+
 TITLE ='Loose yourself to Buzz'
 
-
-
-
 class Team(object):
-    def __init__(self,name, team):
+    def __init__(self,name):
         self.name = name
         self.players = set()
         self.score = 0
-        self.team=""
 
-    def add_player(self):
+    def add_player(self,player):
         self.players.add(player)
+        player.team = self
 
 class Player(object):
     counter=1
@@ -41,7 +42,13 @@ class Game(object):
         self.cursor = self.db_conn.cursor()
         self.sockets = dict()
         self.players = dict()
+        self.teams = dict()
         self.admin = None
+        self.current_section = 0
+        self.current_question = 0
+        self.sections = tools.create_sections("questions")
+        print self.sections
+        self.add_team("unassigned")
 
         if new_db:
             print "creating db"
@@ -53,14 +60,22 @@ class Game(object):
             with self.db_conn:
                 for name, team in self.cursor.execute('SELECT name, team FROM player order by name'):
                     print name, team
-                    self.players[name] = Player(name, team)
+                    team_obj = Team(team)
+                    self.players[name] = player = Player(name)
+                    self.add_team(team).add_player(player)
+                    
 
-    def add_player(self, name):
+
+    def add_team(self,team_name):
+        return self.teams.setdefault(team_name,Team(team_name))
+
+    def add_player(self, name, team_name="unassigned"):
         if self.get_player(name) is None:
             with self.db_conn:
                 try:
-                    self.cursor.execute("INSERT INTO player(name, team) values (?,?)", (name, None))
-                    self.players[name] = Player(name)
+                    self.cursor.execute("INSERT INTO player(name, team) values (?,?)", (name, team_name))
+                    self.players[name] = player = Player(name)
+                    self.add_team(team_name).add_player(player)
                     self.publish_admin(type='info', msg='db insert : %s'%name)
                 except sqlite3.IntegrityError:
                     print "player already exists !!!!"
@@ -81,13 +96,15 @@ class Game(object):
             return 0
 
     def set_admin_socket(self,socket):
-        if self.admin is True:
+        if self.admin is None:
             self.admin = socket
 
 
     def set_socket(self, socket, name):
+
         self.sockets[name] = socket
         socket.player = name
+        self.players[name].socket = socket
 
     def publish_players(self, type, **kwargs):
         msg = dict(type=type)
@@ -98,14 +115,13 @@ class Game(object):
     def publish_admin(self,type, **kwargs):
         msg = dict(type=type)
         msg.update(kwargs)
-        if self.admin:
+        if self.admin and self.admin != True:
             self.admin.write_message(msg)
 
     def publish_all(self, type, **kwargs):
         msg = dict(type=type)
         msg.update(kwargs)
-        print self.admin
-        if self.admin:
+        if self.admin and self.admin != True:
             self.admin.write_message(msg)
         for pname, socket in self.sockets.iteritems():
             socket.write_message(msg)
@@ -127,14 +143,32 @@ class Game(object):
     def socket_admin_disconnected(self):
         self.admin=None
 
+    def update_teams_composition(self, composition):
+        with self.db_conn:
+            for d in composition:
+                team_name = str(d['team'])
+                self.add_team(team_name).players = set([GAME.players[p] for p in d['players']])
+                for player_name in d['players']:
+                    player = self.players[player_name]
+                    if player.team.name != team_name:
+                        player.team = self.teams[team_name]
+                        self.cursor.execute("UPDATE player set team='%s' where name='%s'"%(team_name,player_name))
+                    if player.socket:
+                        player.socket.send_msg(type='team_changed',team=team_name)
+                        GAME.publish_admin(type='info', msg="%s changed to team %s "%(player_name, team_name))
+                    else:
+                        GAME.publish_admin(type='info', msg="%s NEED RELOAD PAGE SINCE HIS TEAM CHANGED"%player_name)
+
+
+
     def __del__(self):
         self.db_conn.close()
 
 
 
 IOLOOP = tornado.ioloop.IOLoop.instance()
+
 GAME = Game(db_name="easyquizz.db")
-SECTIONS = tools.create_sections("questions")
 
 
 
@@ -195,7 +229,7 @@ class LoginHandler(BaseHandler):
                 self.redirect('/login/admin/')
                 return
             self.current_admin = '1'
-            self.render('static/admin.html',title=TITLE)
+            self.redirect('/admin')
         else:
             name=self.get_argument("name")
             self.set_secure_cookie("user", name)
@@ -208,29 +242,22 @@ class LoginHandler(BaseHandler):
                 self.redirect('/login')
 
 
-class GameHandler(py.json_handler.JsonHandler):
-    @tornado.web.asynchronous
-    def get(self):
-        req_type = self.request.arguments['req_type'][0]
-        print req_type
-        if req_type == 'register_user':
-            user_name = self.request.arguments['user_name'][0]
-            try:
-                self.add_player(user_name)
-            except:
-                self.redirect('/login')
+class GameHandler(tornado.web.RequestHandler):
 
-    def add_player(self, name):
-        self.response['id'] = GAME.add_new_player(name)
-        GAME.notify_new_user(name)
-        self.write_json()
+    def post(self,*args,**kwargs):
+        if '/add_team' in args: 
+            team_name = self.get_argument("team_name")
+            GAME.add_team(team_name)
+            print "new_team",team_name
+            self.redirect('/admin')
+
 
 
 class PlayerHandler(BaseHandler):
     def get(self,*args,**kwargs):
         print self.request.uri
         if not self.current_user:
-            self.redirect("/login")
+            self.redir
             return
 
         name = tornado.escape.xhtml_escape(self.current_user)
@@ -249,7 +276,10 @@ class AdminHandler(BaseHandler):
             return
         else:
             GAME.set_admin()
-            self.render('static/admin.html', title=TITLE)
+            self.render('static/admin.html', 
+                    title=TITLE, 
+                    teams=sorted(GAME.teams.values(),key=lambda team:team.score),
+                    sections=GAME.sections)
             return
 
 
@@ -261,8 +291,8 @@ class HTMLQuizzHandler(tornado.web.RequestHandler):
         section_id = int(section_id)
         question_id = int(question_id)
 
-        section_id = max(0, min(int(section_id), len(SECTIONS)-1))
-        section = SECTIONS[section_id]
+        section_id = max(0, min(int(section_id), len(GAME.sections)-1))
+        section = GAME.sections[section_id]
 
         if question_id == -1:
           question_id = len(section.questions)-1
@@ -273,7 +303,7 @@ class HTMLQuizzHandler(tornado.web.RequestHandler):
         with open("static/template.html") as f:
             self.write(f.read()%dict(  
                   max_question=len(section.questions)-1, 
-                  max_section=len(SECTIONS)-1,
+                  max_section=len(GAME.sections)-1,
                   section_id=section_id,
                   question_id=question_id,
                   questions=",".join(["'%s'"%i for i in section.get_contents()]),
@@ -294,11 +324,20 @@ class WebSocketAdminHandler(tornado.websocket.WebSocketHandler):
     
     def on_message(self, message):
         msg = json.loads(message)
-        if msg['type']=='correct':
-            GAME.publish_all(type='info', msg='%s correct answer %.5f'%(self.player,msg['when']))
+        typ = msg['type']
+        if typ=='correct':
+            GAME.publish_admin(type='info', msg='%s correct answer %.5f'%(self.player,msg['when']))
+        elif typ=='teams_compo':
+            GAME.update_teams_composition(msg['compo'])
+            GAME.publish_admin(type='info', msg="Teams changed")
 
     def on_close(self):
         GAME.socket_admin_disconnected()
+
+    def send_msg(self, type, **kwargs):
+        msg = dict(type=type)
+        msg.update(kwargs)
+        self.write_message(msg)
 
 class WebSocketBuzzHandler(tornado.websocket.WebSocketHandler):
     def __init__(self,*args,**kwargs):
@@ -317,6 +356,11 @@ class WebSocketBuzzHandler(tornado.websocket.WebSocketHandler):
         
     def on_close(self):
         GAME.socket_disconnected(self)
+
+    def send_msg(self, type, **kwargs):
+        msg = dict(type=type)
+        msg.update(kwargs)
+        self.write_message(msg)
     
 
 
@@ -327,7 +371,7 @@ app = tornado.web.Application([
                                 (r'/login(.*)', LoginHandler), 
                                 (r'/quizz',  HTMLQuizzHandler ),
                                 (r'/admin',  AdminHandler ),
-                                (r'/game',  GameHandler ),
+                                (r'/game(.*)',  GameHandler ),
                                 (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "static"}),
                                 (r"/questions/(.*)", tornado.web.StaticFileHandler, {"path": "questions"}),
                                 ],

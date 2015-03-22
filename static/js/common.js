@@ -2,7 +2,7 @@ var socket = null;
 
 var logBox = null;
 
-var need_reconnect = false;
+
 
 if (!Date.now) 
 {

@@ -1,3 +1,7 @@
+
+
+var can_send=true;
+var need_reconnect = false;
 function connect_admin() 
 {
 	var scheme = window.location.protocol == 'https:' ? 'wss://' : 'ws://';
@@ -88,6 +92,50 @@ function addTeam()
 		});
 	}
 }
-$(function(){
+
+function teams_changed(data)
+{
+	if (need_reconnect==true)
+	{
+		connect_admin();
+		need_reconnect = false;
+		if (!socket) 
+		{
+			addToLog('Not connected');
+			return;
+		}
+	}
+	alert(JSON.stringify({
+  		type :'teams_compo',
+  		compo:data}));
+  	socket.send(JSON.stringify({
+  		type :'teams_compo',
+  		compo:data
+	}));
+}
+
+
+$(function() {
 	connect_admin();	
+
+	$(".players_list").sortable({
+	  connectWith: ".players_list",
+	  stop:function( event, ui ) {
+	    if (can_send)
+	    {
+	      can_send=false;
+	      var data = $('ul.players_list').map(function(){
+	          var players = [];
+	          $(this).find("li.player_compo").each(function(index){players.push($(this).attr("id")); });
+	          return {
+	              team: $(this).attr("id"),
+	              players: players
+	          };
+	      }).get();
+	      teams_changed(data);
+	    }
+	  },
+	  start:function (event, ui) {can_send=true;}
+	}).disableSelection();
+
 });

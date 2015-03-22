@@ -21,7 +21,45 @@ body {
 	border-color:white ;
 	border-width:5px;
 }
+.team_compo
+{
+	border-radius: 4px;
+	background:#555;
+	padding:5px;
+	margin-bottom:10px;
+}
+.player_compo
+{
+	color:white;
+	margin-bottom:0px;
+}
 
+.section
+{
+	border-style: solid;
+	border-color:#999 ;
+	border-width:1px;
+	background:#555;
+	border-radius: 5px;
+	padding:5px;
+
+}
+
+#team_form
+{
+	margin-bottom:0px;
+}
+
+#unassigned
+{
+	background:#;
+}
+
+.players_list
+{
+	min-height:50px;
+	list-style:none;
+}
 
 .log
 {	

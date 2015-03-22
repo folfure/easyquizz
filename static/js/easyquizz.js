@@ -2,7 +2,7 @@
 
 var user_id = null;
 var team = null;
-
+var need_reconnect = false;
 
 function connect_player() 
 {
@@ -101,6 +101,8 @@ function buzz()
 {
 	if (need_reconnect==true)
 	{
+		location.reload();
+		return;
 		connect_player();
 		need_reconnect = false;
 		if (!socket) 

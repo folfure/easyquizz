@@ -16,7 +16,7 @@ function connect_player()
 
 	var scheme = window.location.protocol == 'https:' ? 'wss://' : 'ws://';
 	var defaultAddress = scheme + window.location.host + ':80/buzz';
-	var url = defaultAddress+'?user='+user_name; 			//addressBox.value;
+	var url = defaultAddress+'?user='+player; 			//addressBox.value;
 	addToLog("Connecting to: "+url);
 
 	if ('WebSocket' in window) {
@@ -50,6 +50,10 @@ function connect_player()
 		{
 			addToLog(obj.msg);
 		}
+		else if (obj.type='update_html')
+		{
+			update_html(obj.data);
+		}
 	};
 	socket.onerror = function () {
 		addToLog('Error');
@@ -80,12 +84,12 @@ function validateSurname()
 {
 	if ($("#surname").val() != "" && $("team").val() != "")
 	{
-		user_name = $("#surname").val();
+		player = $("#surname").val();
 		team = $("#team :selected").text();
 		$.ajax({
 		  type: "get",
 		  url: "game",
-		  data: {user_name : user_name, team:team, req_type:"register_user"},
+		  data: {player : player, team:team, req_type:"register_user"},
 		  cache: false,
 		  success: function(data){
 		    alert(data);
@@ -114,7 +118,7 @@ function buzz()
 
   	socket.send(JSON.stringify({
   		type :'buzz',
-  		from : user_name,
+  		from : player,
   		when : Date.now()/1000
 }));
 }

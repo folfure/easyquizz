@@ -52,13 +52,24 @@ body {
 
 #unassigned
 {
-	background:#;
+	background:transparent;
 }
 
 .players_list
 {
 	min-height:50px;
 	list-style:none;
+}
+
+
+.je-dis-oui
+{
+	background-color:green;
+}
+
+.je-dis-non
+{
+	background-color:red;
 }
 
 .log

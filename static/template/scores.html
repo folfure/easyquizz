@@ -1,0 +1,19 @@
+
+  <table>
+    {% for i,team_ in enumerate(scores) %}
+      {% if team_[1] == 'unassigned' %}
+      {% continue %}
+      {% end %}
+    {% if team==team_[1] %}
+    <tr> <td class="team_name"> {{i+1}}. </td>
+      <td class="team_name"> {{ escape(team_[1]) }} </td>
+      <td class="team_score"> {{team_[0]}} </td>
+    {% else %}
+      <tr> <td class="other_team_name"> {{i+1}}. </td>
+      <td class="other_team_name"> {{ escape(team_[1]) }} </td>
+      <td class="other_team_score"> {{team_[0]}} </td>
+    {% end %}
+    </tr>
+    {% end %}
+
+</table>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PURE Unobtrusive Rendering Engine</title>
+  <script src="http://pure.github.io/pure/libs/pure.js"></script>
+</head>
+<body>
+ 
+  <!-- HTML template -->
+  <div class="js-animals">
+
+  <ul class="js-animal">
+    <span>name</span>
+    <li>name</li>
+  </ul>
+</div>
+ 
+  <script>
+    var data = {
+      animals:[
+        {name:'bird', legs: 2 , id:1, children:[{name:'murge1'}]},
+        {name:'cat', legs: 4 , id:2, children:[{name:'murge2'}]},
+        {name:'dog', legs: 4 , id:3, children:[{name:'murge3'}]},
+        {name:'mouse', legs: 4, id:6, children:[{name:'murge'}]}
+      ]
+   },
+
+   directive = {
+      'ul.js-animal':{
+        'animal<-animals':{
+          'span':'animal.name', // the . selects the node that is repeated, here the LI
+          '@data-legs': 'animal.legs',
+          '@class':'toto pouet murge',
+          '@id':'xyz_#{animal.id}', //to set an attribute to the node, just use @ and the attribute name
+          'li':{
+            'child<-animal.children':{
+            '.':'child.name'
+            }
+          }
+        }
+      }
+    };
+
+    $p( '.js-animals' ).render( data, directive );
+
+</script>
+</body>
+</html>

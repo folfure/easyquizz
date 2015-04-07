@@ -1,0 +1,118 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Loose yourself to buzz</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="static/skeleton/css/normalize.css">
+  <link rel="stylesheet" href="static/skeleton/css/skeleton.css">
+  <link rel="stylesheet" href="static/css/easyquizz.css">
+  <link rel="icon" type="image/png" href="static/skeleton/images/favicon.png">
+
+</head>
+<body>
+
+  <div class="container">
+    <h4>Loose yourself to Buzz</h4>
+    <div id="name_form">
+
+    <div class="row">
+    <div class="six columns" id="user_name">
+      <span>Josée</span>
+    </div>
+
+    </div>
+    <div id="scores">
+      <table>
+        <tr> <td class="team_name js-position" > 1. </td>
+        <td class="team_name js-name"> Best one's </td>
+        <td class="team_score js-score"> 545 </td>
+      </tr>
+    </table>
+    <div class="row">
+
+    <div class="twelve columns">
+          <button class="button button-primary buzz noselect fastclick" id="buzz" onclick="buzz()">Buzz!</a> 
+    </div>
+
+
+    </div>
+    
+    <div class="row">
+      <div class="twelve column">
+        <h5>Log</h5>
+        <div id="log_window" class='log'>
+      the log
+      </div>
+      </div>
+    </div>
+  </div>
+
+<!-- End Document
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <script src="static/js/vendor/jquery-2.1.3.min.js"></script>
+  <script src="static/js/vendor/pure.js"></script>
+  <script>
+  function update_content(data)
+  {
+    /*var data = {
+      animals:[
+        {name:'bird', legs: 2 , id:1, children:[{name:'murge1'}]},
+        {name:'cat', legs: 4 , id:2, children:[{name:'murge2'}]},
+        {name:'dog', legs: 4 , id:3, children:[{name:'murge3'}]},
+        {name:'mouse', legs: 4, id:6, children:[{name:'murge'}]}
+      ]
+   },*/
+
+   var directive = {
+      'span':'player'}; 
+   $p( 'div#user_name' ).render( data, directive );
+   directive = {
+    'tr ':
+    {
+        'col<-team_scores': {'td.js-position': { '.': function( a ){ return a.pos }} }
+    },
+    {
+        'col<-team_scores':{'td.js-name': { '.': 'col.team'}}
+    },
+        'col<-team_scores':{'td.js-score': {{ '.': 'col.score'}}
+    }
+
+   };
+   $p( 'div#scores table' ).render( data, directive );
+      /*
+        'animal<-animals':{
+          'span':'animal.name', // the . selects the node that is repeated, here the LI
+          '@data-legs': 'animal.legs',
+          '@class':'toto pouet murge',
+          '@id':'xyz_#{animal.id}', //to set an attribute to the node, just use @ and the attribute name
+          'li':{
+            'child<-animal.children':{
+            '.':'child.name'
+            }
+          }
+        }
+      }
+    };*/
+  
+  }
+
+   $(function(){
+    $.ajax({url: "/pdata", success: function(result){
+        alert(result);
+        update_content(JSON.parse(result));
+    }});
+  });
+  </script>
+  <script src="static/js/common.js"></script>
+  <script src="static/js/easyquizz.js"></script>
+  <script src="static/js/vendor/fastclick.js"></script>
+<script type='text/javascript'>
+var button = document.querySelector(".fastclick");
+new FastClick(button);
+</script>
+
+</body>
+</html>

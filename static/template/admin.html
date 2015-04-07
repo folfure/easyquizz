@@ -25,20 +25,9 @@
 
     </div>
     <div id="scores">
-      <table>
-        {% for i,team in enumerate(teams) %}
-          {% if team.name == 'unassigned' %}
-          {% continue %}
-        <tr> <td class="team_name"> {{i}} </td>
-          <td class="team_name"> {{ escape(team.name) }} </td>
-          <td class="team_score"> {{team.score}} </td>
-        </tr>
-          {% end %}
-        {% end %}
-
-    </table>
+    {% set team=None %}
+    {% include "scores.html" %}
     </div>
-
     
 <div id="add_team_form">
     <form action="/game/add_team" method="post" id="team_form">
@@ -55,13 +44,13 @@
 <div id="team_composition">
 <div class="row">
   {% for i,team in enumerate(teams) %}
-  {% if team.name == 'unassigned' %}
+  {% if team[0] == 'unassigned' %}
 
  <div class="four columns team_compo">
-   {{ escape(team.name) }}
-  <ul id="{{ escape(team.name) }}" class="players_list">
-  {% for player in sorted(team.players) %}
-  <li class="ui-state-default player_compo"  id="{{ escape(player.name) }}">{{ escape(player.name) }}</li>
+   {{ escape(team[0]) }}
+  <ul id="{{ escape(team[0]) }}" class="players_list">
+  {% for player in sorted(team[1]) %}
+  <li class="ui-state-default player_compo"  id="{{ escape(player) }}">{{ escape(player) }}</li>
  {% end %}
 
   </ul>
@@ -70,13 +59,13 @@
  {% end %}
 
    {% for i,team in enumerate(teams) %}
-  {% if team.name != 'unassigned' %}
+  {% if team[0] != 'unassigned' %}
 
  <div class="four columns team_compo">
-   {{ escape(team.name) }}
-  <ul id="{{ escape(team.name) }}" class="players_list">
-  {% for player in sorted(team.players) %}
-  <li class="ui-state-default player_compo"  id="{{ escape(player.name) }}">{{ escape(player.name) }}</li>
+   {{ escape(team[0]) }}
+  <ul id="{{ escape(team[0]) }}" class="players_list">
+  {% for player in sorted(team[1]) %}
+  <li class="ui-state-default player_compo"  id="{{ escape(player) }}">{{ escape(player) }}</li>
  {% end %}
 
   </ul>
@@ -93,9 +82,9 @@
   <h4>Questions</h4>
   {% for i,section in enumerate(sections) %}
   <ul class="section">
-    {{str(i+1)}}.{{  escape(section.name)}}
+    <div onclick="$('.s{{i}}').toggle()">{{str(i+1)}}.{{  escape(section.name)}}
     {% for j,question in enumerate(section.questions) %}
-    <li style="display:none">{{escape(question.name)}}</li>
+    <li class='s{{i}}' style="display:none">{{escape(question.name)}}</li>
     {% end %}
   </ul>
   {% end %}
@@ -103,9 +92,9 @@
 </div>
 <div class="six columns">
   controls
-      <input type='submit' class="button button-primary" value="Reset">
-      <input type='submit' class="button button-primary" value="Je dis oui">
-      <input type='submit' class="button button-primary" value="Je dis non">
+      <input type='submit' class="button button-primary" value="Reset" onclick="reset_buzzers()">
+      <input type='submit' class="button button-primary je-dis-oui" style='background:green;border-color:#999' value="Je dis oui" onclick="je_dis_oui()">
+      <input type='submit' class="button button-primary je-dis-non" style='background:red;border-color:#999' value="Je dis non">
 
         <div id="log_window" class='log'>
       the log

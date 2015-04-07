@@ -15,29 +15,21 @@
 <body>
 
   <div class="container">
-    <h4>{{title}}</h4>
-    <div id="name_form">
+    <h4>Loose yourself to Buzz</h4>
 
     <div class="row">
     <div class="six columns" id="user_name">
-      {{user_name}}
+      <span>{{player}}</span>
     </div>
 
     </div>
     <div id="scores">
-      <table>
-        <tr> <td class="team_name"> 1. </td>
-        <td class="team_name"> Best one's </td>
-        <td class="team_score"> 545 </td>
-      </tr>
-      <tr>
-       <td class="other_team_name"> 2. </td>
-       <td class="other_team_name"> Loosers </td>
-        <td class="other_team_score"> 246 </td>
-      </tr>
-    </table>
-    <div class="row">
+    
+    {% include "scores.html"%}
+    </div>
 
+    <div class="row">
+  
     <div class="twelve columns">
           <button class="button button-primary buzz noselect fastclick" id="buzz" onclick="buzz()">Buzz!</a> 
     </div>
@@ -58,11 +50,12 @@
 <!-- End Document
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <script src="static/js/vendor/jquery-2.1.3.min.js"></script>
+  <script src="static/js/vendor/pure.js"></script>
+  <script>
+  var player="{{player}}";
+  </script>
   <script src="static/js/common.js"></script>
   <script src="static/js/easyquizz.js"></script>
-  <script>
-   user_name="{{user_name}}";
-  </script>
   <script src="static/js/vendor/fastclick.js"></script>
 <script type='text/javascript'>
 var button = document.querySelector(".fastclick");

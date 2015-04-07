@@ -55,45 +55,36 @@ function connect_admin()
 	socket.onclose = function (event) {
 		var logMessage = 'Closed (';
 		if ((arguments.length == 1) && ('CloseEvent' in window) &&
-		(event instanceof CloseEvent)) {
-		logMessage += 'wasClean = ' + event.wasClean;
-		// code and reason are present only for
-		// draft-ietf-hybi-thewebsocketprotocol-06 and later
-		if ('code' in event) {
-		logMessage += ', code = ' + event.code;
+				(event instanceof CloseEvent)) 
+		{
+			logMessage += 'wasClean = ' + event.wasClean;
+			// code and reason are present only for
+			// draft-ietf-hybi-thewebsocketprotocol-06 and later
+			if ('code' in event) 
+			{
+				if (event.code == 5 && 'reason' in event) 
+				{
+					$(document.body).empty();
+					$(document.body).html("<h1>"+event.reason+"</h1>");
+					return;
+				}
+				logMessage += ', code = ' + event.code;
+			}
+			if ('reason' in event) 
+			{
+				logMessage += ', reason = ' + event.reason;
+			}
 		}
-		if ('reason' in event) {
-		logMessage += ', reason = ' + event.reason;
-		}
-		} else {
-		logMessage += 'CloseEvent is not available';
+		else 
+		{
+			logMessage += 'CloseEvent is not available';
 		}
 		addToLog(logMessage + ')');
 		need_reconnect=true;
 	};
 }
 
-function addTeam()
-{
-	if ($("#team_entry").val() != "")
-	{
-		var new_team_name = $("#team_entry").val();
-		var myusername = $("#username").val();
-		$.ajax({
-		  type: "get",
-		  url: "game",
-		  data: {user_name : user_name, team:team, req_type:"register_user"},
-		  cache: false,
-		  success: function(data){
-		    alert(data);
-		  	user_id = data["id"];
-		    alert(user_id);
-		  }
-		});
-	}
-}
-
-function teams_changed(data)
+function reconnect()
 {
 	if (need_reconnect==true)
 	{
@@ -105,15 +96,25 @@ function teams_changed(data)
 			return;
 		}
 	}
-	alert(JSON.stringify({
-  		type :'teams_compo',
-  		compo:data}));
+}
+
+function teams_changed(data)
+{
+  	reconnect();
   	socket.send(JSON.stringify({
   		type :'teams_compo',
   		compo:data
 	}));
 }
 
+
+function reset_buzzers()
+{
+	reconnect();
+	socket.send(JSON.stringify({
+  		type :'reset_buzzers',
+	}));
+}
 
 $(function() {
 	connect_admin();	
@@ -124,14 +125,12 @@ $(function() {
 	    if (can_send)
 	    {
 	      can_send=false;
-	      var data = $('ul.players_list').map(function(){
+	      var data={};
+	      $('ul.players_list').map(function(){
 	          var players = [];
 	          $(this).find("li.player_compo").each(function(index){players.push($(this).attr("id")); });
-	          return {
-	              team: $(this).attr("id"),
-	              players: players
-	          };
-	      }).get();
+	          data[$(this).attr("id")] = players;
+	      });
 	      teams_changed(data);
 	    }
 	  },

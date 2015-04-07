@@ -17,3 +17,11 @@ function addToLog(log)
   // Large enough to keep showing the latest message.
   //logBox.scrollTop = 1000000;
 }
+
+function update_html(content)
+{
+	$.each(content, function (k, v) {
+		$('#'+k).html(v);
+	});
+
+}

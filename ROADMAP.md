@@ -1,6 +1,5 @@
 TO DO
 =====
-TEST2
 1. Buzzers 
  - Add synchro timestamp between players and server when websocket is created and each time buzzers are reset
  - when user buzzes : 

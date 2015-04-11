@@ -1,6 +1,6 @@
 TO DO
 =====
-TODO
+
 1. Buzzers 
  - Add synchro timestamp between players and server when websocket is created and each time buzzers are reset
  - when user buzzes : 
@@ -29,8 +29,8 @@ TODO
       + display rest of video / image / sound 
  - next button (like powerpoint):
       + go to next step (big question number or question itself or socres at end of section)
- - deactivate all buzzers
- - activate all buzzers
+ - deactivate all buzzers (CARNOT)
+ - activate all buzzers (CARNOT)
 
   b. status of all players
  - gray = not connected (no websocket)
@@ -46,7 +46,7 @@ TODO
  - small button to display directly to this question to the users
  
 
-  d. scores
+  d. scores (CARNOT)
   - always displayed to THE screen somewhere
   - +/- buttons to add/substract points to the team
 

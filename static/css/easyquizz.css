@@ -143,7 +143,19 @@ body {
 
 }
 
-
+td.inc_score, td.dec_score
+{
+    
+    padding:2px;
+}
+td.inc_score
+{
+    background-color: green;
+}
+td.dec_score
+{
+    background-color: red;
+}
 .joueur
 {
 	margin: 20px;

@@ -33,7 +33,8 @@ class Game(object):
         print self.sections
 
         self.add_team("unassigned")
-
+        
+        
         if new_db:
             print "creating db"
             with self.db_conn:
@@ -76,9 +77,63 @@ class Game(object):
             pass
 
     def add_team(self,team):
+        print self.teams
+        # if new team is not unassigned, remove unassigned  
+        if team != "unassigned" and "unassigned" in self.teams.keys():
+            self.team_scores.pop("unassigned")
+            self.teams.pop("unassigned")
         self.team_scores.setdefault(team,[0, team])
         return self.teams.setdefault(team,set())
     
+    
+   # Returns score of team.
+    def getTeamScore(self, team):
+        if self.teamExist(team):
+            return int(self.team_scores[team][0])
+        else:
+            raise TeamDoesNotExistError(team)
+        
+        
+    # returns True if team exist, false otherwise.
+    def teamExist(self, team):
+        if team in self.team_scores.keys():
+            return True
+        else:
+            raise TeamDoesNotExistError(team)
+    
+    def getScores(self):
+        return sorted(self.team_scores.values(),reverse=True)
+    
+    # Sets team score to new_score.
+    # Tested. OK.
+    def setTeamScore(self, team, new_score):
+        # if team exists.
+        if self.teamExist(team):
+            # Negative scores not allowed.
+            if int(new_score) < 0:
+                new_score = 0
+            self.team_scores[team][0] = new_score
+            self.publish_all(type='info', msg="New Score for team %s: %d"%(team,new_score))
+            self.notifyScores()
+            return new_score
+        return False
+    
+    # Update score by increment. Uses setTeamScore.
+    # Tested. OK.
+    def updateScore(self, team, score_inc):
+        if team in self.team_scores.keys():
+            new_score = self.getTeamScore(team) + int(score_inc)
+            self.setTeamScore(team, new_score) 
+    
+    # Notifies all players and admin with scores.
+    def notifyScores(self):
+        scores = self.getScores()
+        # Loop over players
+        for player in self.sockets:
+            team = self.players[player]
+            self.publish_player(player, type='update_html', data={'scores':TEMPLATES.load("scores.html").generate(scores=scores, team=team)})
+        self.publish_admin(type='update_html', data={'scores':TEMPLATES.load("scores_admin.html").generate(scores=scores, team="")})
+            
     def add_player(self,player,team="unassigned"):
         self.add_team(team).add(player)
         self.players[player] = team
@@ -123,7 +178,7 @@ class Game(object):
 
     def get_player_data(self,player):
         return dict(player=player, team=self.players[player], 
-                    team_scores=sorted(self.team_scores.values()), 
+                    team_scores=self.getScores(), 
                     player_scores=sorted(self.player_scores))
 
     def publish_players(self, type, **kwargs):
@@ -156,7 +211,7 @@ class Game(object):
         self.admin=None
 
     def update_teams_composition(self, composition):
-        scores = sorted(self.team_scores.values())
+        scores = self.getScores()
         with self.db_conn:
             for new_team, new_players in composition.iteritems():
                 #update information of new players only (if moved then he would be )
@@ -285,7 +340,7 @@ class PlayerHandler(BaseHandler):
             else:
                 self.write(TEMPLATES.load("player.html").generate(
                                 title=TITLE, 
-                                scores=sorted(GAME.team_scores.values()), 
+                                scores=GAME.getScores(), 
                                 team=GAME.players[player],
                                 player=player ))
                 self.finish()
@@ -304,8 +359,8 @@ class AdminHandler(BaseHandler):
             GAME.socket_admin_disconnected()
             self.write(TEMPLATES.load("admin.html").generate(
                     title=TITLE, 
-                    scores=sorted(GAME.team_scores.values()),
-                    teams=sorted(GAME.teams.items()),
+                    scores=GAME.getScores(),
+                    teams=GAME.teams.items(),
                     sections=GAME.sections))
             self.finish()
             return
@@ -351,20 +406,25 @@ class WebSocketAdminHandler(tornado.websocket.WebSocketHandler):
         #to do check no admin already logged
         #if GAME.admin is set to True it means admin cam efrom post (admin form)
         #if GAME.admin is None amdin came from coookie without 
-        if GAME.admin is not (None, True):
-            self.close(code=5, reason="An admin is already logged")
-        else:
-            GAME.set_admin_socket(self)
-            self.set_nodelay(True)
+        # if GAME.admin is not (None, True):
+            # self.close(code=5, reason="An admin is already logged")
+        # else:
+        GAME.set_admin_socket(self)
+        self.set_nodelay(True)
     
     def on_message(self, message):
         msg = json.loads(message)
+        print msg
         typ = msg['type']
         if typ=='correct':
             GAME.publish_admin(type='info', msg='%s correct answer %.5f'%(self.player,msg['when']))
         elif typ=='teams_compo':
             GAME.update_teams_composition(msg['compo'])
             GAME.publish_admin(type='info', msg="Teams changed")
+        elif typ == 'score_change':
+            GAME.updateScore(msg["team"], msg["inc"])
+            GAME.publish_admin(type='info', msg="Team "+msg["team"]+" score changed!")
+            
 
     def on_close(self):
         print "WebSocketAdminHandler.on_close : GAME admin", GAME.admin
@@ -400,7 +460,19 @@ class WebSocketBuzzHandler(tornado.websocket.WebSocketHandler):
         msg.update(kwargs)
         self.write_message(msg)
     
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
 
+class TeamDoesNotExistError(Error):
+    """Exception raised if team does not exist.
+
+    Attributes:
+        team -- requested team.
+    """
+
+    def __init__(self, team):
+        self.team = team
 
 app = tornado.web.Application([
                                 (r'/', PlayerHandler), 

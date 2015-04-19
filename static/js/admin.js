@@ -48,6 +48,10 @@ function connect_admin()
 		{
 			addToLog(obj.msg);
 		}
+        else if (obj.type='update_html')
+		{
+			update_html(obj.data);
+		}
 	};
 	socket.onerror = function () {
 		addToLog('Error');
@@ -104,6 +108,16 @@ function teams_changed(data)
   	socket.send(JSON.stringify({
   		type :'teams_compo',
   		compo:data
+	}));
+}
+
+function change_score(scored_team, score_inc)
+{
+  	reconnect();
+  	socket.send(JSON.stringify({
+  		type :'score_change',
+  		team: scored_team,
+        inc: score_inc
 	}));
 }
 

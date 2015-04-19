@@ -48,5 +48,5 @@ TO DO
 
   d. scores (CARNOT)
   - always displayed to THE screen somewhere
-  - +/- buttons to add/substract points to the team
+  x +/- buttons to add/substract points to the team
 

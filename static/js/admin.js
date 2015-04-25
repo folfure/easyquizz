@@ -40,7 +40,8 @@ function connect_admin()
 	};
 	socket.onmessage = function (event) {
 		var obj = JSON.parse(event.data);
-		if (obj.type=='buzz')
+		console.log(obj);
+        if (obj.type=='buzz')
 		{
 			addToLog('< ' + (obj.when )+' ' +obj.from);
 		}
@@ -48,10 +49,14 @@ function connect_admin()
 		{
 			addToLog(obj.msg);
 		}
-        else if (obj.type='update_html')
+        else if (obj.type=='update_html')
 		{
 			update_html(obj.data);
 		}
+        else
+        {
+            console.log("je fais rien...");
+        }
 	};
 	socket.onerror = function () {
 		addToLog('Error');

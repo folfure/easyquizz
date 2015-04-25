@@ -11,26 +11,33 @@ import os
 import json
 from pprint import pprint
 import sqlite3
+import time
+import thread
 
 TITLE ='Loose yourself to Buzz'
 TEMPLATES = tornado.template.Loader("static/template")
 class Game(object):
+    
+    TIMER_DURATION = 5          # time to answer a question in seconds
+    
     def __init__(self, db_name):
         new_db = not os.path.exists(db_name)
         self.db_conn = sqlite3.connect(db_name, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
         self.cursor = self.db_conn.cursor()
-        self.sockets = dict()
-        self.players = dict()
-        self.teams = dict()
-        self.team_scores = dict()
-        self.player_scores = dict()
+        self.sockets = dict()           # {playerName: socketObject}. Dict in which key is the player name and the value is the socket object for this player. 
+        self.players = dict()           # {playerName: teamName}. Dict in which key is player name. Values is player team.
+        self.teams = dict()             # {teamName: set([players])}. Dict in which key is player name. Values is player team.
+        self.team_scores = dict()       # {teamName: [score, teamName]}.Dict in which key is team name. Values is a list where first item is the score, second item is the team name again.
+        self.player_scores = dict()     # {playerName: [score, playerName]}.Dict in which key is player name. Values is a list where first item is the score, second item is the player name again.
         self.admin = None
         self.current_section = 0
         self.current_question = 0
+        self.current_question_score = 5
         self.sections = tools.create_sections("questions")
-
-
-        print self.sections
+        self.referenceTimeStamp = self.getCurrentTimestamp() # Timestamp UTC. 
+        self.gameOpen = 10                      # contains 0 when game is closed. COntains a timestamp when game is open. Timestamp correspond to the time when the game was open. 
+        self.can_answer = self.teams.keys()     # ALl the teams can answer at the beginning.
+        print "Reference Timestamp: "+str(self.referenceTimeStamp)
 
         self.add_team("unassigned")
         
@@ -46,39 +53,113 @@ class Game(object):
                 for player, team in self.cursor.execute('SELECT name, team FROM player order by name'):
                     self.add_player(player,team)
         self.reset_buzzers()
-                 
-    #to do
-    def reset_buzzers(self, exclude=None):
-        self.current_player = None
-        self.current_team = None
-        self.cant_answer = set()
-        if exclude:
-            self.cant_answer.add(exclude)
-        for player, socket in self.sockets.iteritems():
-            if exclude and self.players[player]==exclude:
-               continue
-            socket.write_message(dict(type='enable_buzzer'))
+    
+    # Returns the current UTC timestamp. 
+    #Maybe not accurate enough. Some systems gives timestamp with a second accuracy, not below.
+    def getCurrentTimestamp(self):
+        return int(round(time.time()*1000)) + time.timezone
+    
+    
+    
+    #Reactivate buzzers for the authorized teams.
+    def reset_buzzers(self):
+        self.publish_admin(type='info',msg="Resetting buzzers for authorized teams.")
+        for team in self.can_answer:
+            self.publish_team(team, type='buzzerActive', on=0)
+        self.publish_admin(type='info',msg="Done.")
+            
+        
 
-    #to do
+    # Triggered by game master at the end of the timer, when team that buzzed gives the wrong answer.
+    # Team is excluded from the game for the current question.
     def je_dis_non(self):
-        if not self.current_team:
-            self.publish_admin(type='info',msg="warning : no active team")
+        if not self.current_team or not self.current_player:
+            self.publish_admin(type='info',msg="warning : no active team or player")
         else:
-            #stop current timer for everyone
-            pass
+            # Store team in can't answer team list.
+            self.exclude(self.current_team)
+            # Reactivate buzzers for the other to continue the same question.
+            self.reset_buzzers()
+    
+    # Triggered by game master at the end of the timer, when team that buzzed gives the wrong answer.
+    # Team score is increase by current question score and game is closed.
+    def je_dis_oui(self):
+        if not self.current_team or not self.current_player:
+            self.publish_admin(type='info',msg="warning : no active team or player")
+        else:
+            # Increase current team score by question score.
+            updateScore(self.current_team, self.current_question_score)
+            # Increase current player score?
+            
+            # Reactivate buzzers for the other to continue the question.
+            self.closeGame()
 
+
+    
+    
+    # Exclude team from the current question.
+    def exclude(team):
+        self.can_answer.remove(team)
+        self.cant_answer.append(team)
+        
+            
+    # returns True if Game is open and players can buzz.
+    def isGameOpen(self):
+        if self.gameOpen > 0:
+            return True
+        else:
+            return False
+    
+    def openGame(self):
+        self.gameOpen = self.getCurrentTimestamp()
+        self.current_team = None
+        self.current_player = None
+        self.reset_buzzers()
+        
+    def closeGame(self):
+        self.gameOpen = 0
+    
     #to do
-    def handle_buzz(self, player, team):
-        if team in self.cant_answer:
-            return
-        if self.current_player and self.current_team:
-            return 
-        else:
-            pass
-
+    def handle_buzz(self, player, timeBuzz):
+        # self.reset_buzzers()
+        playerTeam = self.players[player]
+        if playerTeam in self.can_answer and self.isGameOpen() and self.current_team != "":
+            # Player takes hand.
+            # Block others buzzers
+            self.publish_all(GAME.publish_players(type='buzzerActive', on=0))
+            self.publish_all(GAME.publish_all(type='info', msg='All buzzers are blocked'))
+             
+            self.current_team = playerTeam
+            self.current_player = player
+            self.publish_all(GAME.publish_all(type='info', msg='Team %s has hand for 5 seconds'%playerTeam))
+            
+            # start timer
+            try:
+                thread.start_new_thread( self.simpleTimer, (GAME.TIMER_DURATION, ) )
+            except:
+                print "Error: unable to start timer -> continue without timer."
+            
+    
+    # Countdown from duration (in seconds) to zero.
+    def simpleTimer(self, duration):
+        cpt = duration
+        while cpt >= 1:
+            self.publish_all(GAME.publish_all(type='info', msg=str(cpt)+'...'))
+            time.sleep(1)
+            cpt = cpt - 1
+        #self.passHand()
+        
+    # Launched at the end of the timer. Reactivate all buzzers.
+    def passHand(self):
+        self.current_team = ""
+        self.current_player = ""
+        # Reactivate buzzers.
+        self.publish_all(GAME.publish_players(type='buzzerActive', on=1))
+        self.publish_all(GAME.publish_all(type='info', msg='End of Hand, buzzers are reactivated!'))
+    
+    
     def add_team(self,team):
-        print self.teams
-        # if new team is not unassigned, remove unassigned  
+        # if new team is not unassigned, remove unassigned if it still exists. Otherwise, unsassigned appears as ghost in the scores (1. team 1, 2. team 2, 4. team 3) 
         if team != "unassigned" and "unassigned" in self.teams.keys():
             self.team_scores.pop("unassigned")
             self.teams.pop("unassigned")
@@ -91,15 +172,15 @@ class Game(object):
         if self.teamExist(team):
             return int(self.team_scores[team][0])
         else:
-            raise TeamDoesNotExistError(team)
+            raise Exception("Team %s does not exist!"%team)
         
         
     # returns True if team exist, false otherwise.
     def teamExist(self, team):
-        if team in self.team_scores.keys():
+        if team in self.teams.keys():
             return True
         else:
-            raise TeamDoesNotExistError(team)
+            return False
     
     def getScores(self):
         return sorted(self.team_scores.values(),reverse=True)
@@ -133,8 +214,11 @@ class Game(object):
             team = self.players[player]
             self.publish_player(player, type='update_html', data={'scores':TEMPLATES.load("scores.html").generate(scores=scores, team=team)})
         self.publish_admin(type='update_html', data={'scores':TEMPLATES.load("scores_admin.html").generate(scores=scores, team="")})
-            
+        
     def add_player(self,player,team="unassigned"):
+        if not self.teamExist("unassigned"):
+            team = self.teams.keys()[0]
+            
         self.add_team(team).add(player)
         self.players[player] = team
         self.player_scores.setdefault(player,[0, player])
@@ -163,7 +247,8 @@ class Game(object):
         #what if self.admin is True ?
         if self.admin is None:
             self.admin = socket
-
+    
+    # Sets socket for player.
     def set_socket(self, socket, name):
         self.sockets[name] = socket
         socket.player = name
@@ -176,6 +261,11 @@ class Game(object):
             return 0
         return 1
 
+    # Publish to all players of a team.
+    def publish_team(self, team, type, **kwargs):
+        for player in self.teams[team]:
+            self.publish_player(player, type, **kwargs)
+        
     def get_player_data(self,player):
         return dict(player=player, team=self.players[player], 
                     team_scores=self.getScores(), 
@@ -262,6 +352,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
 class LoginHandler(BaseHandler):
     def get(self,*args,**kwargs):
+        print "LoginHandler"
         params = self.request.arguments
         if params.has_key('logoff') :
             if '/admin' in args:
@@ -316,6 +407,7 @@ class LoginHandler(BaseHandler):
 class GameHandler(tornado.web.RequestHandler):
 
     def post(self,*args,**kwargs):
+        print "GameHandler"
         if '/add_team' in args: 
             team_name = self.get_argument("team_name")
             GAME.add_team(team_name)
@@ -323,10 +415,11 @@ class GameHandler(tornado.web.RequestHandler):
             self.redirect('/admin')
 
 
-
+# Called when players connects to ipaddress. Either he never connects and he is redirected to /login.
+# or he already connected and he is redirected to his buzz page. 
 class PlayerHandler(BaseHandler):
     def get(self,*args,**kwargs):
-
+        print "PlayerHandler"
         if not self.current_user:
             self.redirect('/login')
             return
@@ -349,6 +442,7 @@ class PlayerHandler(BaseHandler):
             self.clear_cookie("user")
             self.redirect('/login')
 
+# Called when someone connects to ipaddress/admin
 class AdminHandler(BaseHandler):
     def get(self,*args,**kwargs):
         print "AdminHandler.get : GAME admin", GAME.admin
@@ -369,6 +463,7 @@ class AdminHandler(BaseHandler):
 class HTMLQuizzHandler(tornado.web.RequestHandler):
 
     def get(self):
+        print "HTMLQuizzHandler"
         section_id = self.get_argument('section',default=0)
         question_id = self.get_argument('question',default=0)
         section_id = int(section_id)
@@ -396,10 +491,12 @@ class HTMLQuizzHandler(tornado.web.RequestHandler):
                   ) )
         self.finish()
 
+# Websocket to admin.
 class WebSocketAdminHandler(tornado.websocket.WebSocketHandler):
     def __init__(self,*args,**kwargs):
         tornado.websocket.WebSocketHandler.__init__(self, *args,**kwargs)
         self.admin = None
+        
 
     def open(self, *args, **kwargs):
         print("open", "WebSocketAdminHandler")
@@ -411,6 +508,7 @@ class WebSocketAdminHandler(tornado.websocket.WebSocketHandler):
         # else:
         GAME.set_admin_socket(self)
         self.set_nodelay(True)
+        GAME.publish_admin(type='info', msg='Reference Timestamp : %d'%GAME.referenceTimeStamp)
     
     def on_message(self, message):
         msg = json.loads(message)
@@ -436,21 +534,27 @@ class WebSocketAdminHandler(tornado.websocket.WebSocketHandler):
         msg.update(kwargs)
         self.write_message(msg)
 
+# Websocket to player.
 class WebSocketBuzzHandler(tornado.websocket.WebSocketHandler):
+    
     def __init__(self,*args,**kwargs):
+        
         tornado.websocket.WebSocketHandler.__init__(self, *args,**kwargs)
         self.player = None
 
     def open(self, *args, **kwargs):
         print("open", "WebSocketPlayerHandler")
-        GAME.set_socket(self, self.get_argument('user'))
+        playerName = self.get_argument('user')
+        GAME.set_socket(self, playerName)
         self.set_nodelay(True)
+        GAME.publish_player(playerName, type='info', msg='Reference Timestamp : %d'%GAME.referenceTimeStamp)
     
     def on_message(self, message):
         msg = json.loads(message)
         if msg['type']=='buzz':
-            GAME.publish_all(type='info', msg='%s buzzed %.5f'%(self.player,msg['when']))
-
+            print msg['when']
+            GAME.publish_all(type='info', msg='%s buzzed %d'%(self.player,msg['when']))
+            GAME.handle_buzz(self.player, int(msg['when']))
         
     def on_close(self):
         GAME.socket_disconnected(self.player)
@@ -460,19 +564,7 @@ class WebSocketBuzzHandler(tornado.websocket.WebSocketHandler):
         msg.update(kwargs)
         self.write_message(msg)
     
-class Error(Exception):
-    """Base class for exceptions in this module."""
-    pass
 
-class TeamDoesNotExistError(Error):
-    """Exception raised if team does not exist.
-
-    Attributes:
-        team -- requested team.
-    """
-
-    def __init__(self, team):
-        self.team = team
 
 app = tornado.web.Application([
                                 (r'/', PlayerHandler), 

@@ -20,7 +20,14 @@ body {
 	border-style: solid;
 	border-color:white ;
 	border-width:5px;
+    
 }
+#buzz .inactive
+{
+    background: white;
+    color: red;
+}
+
 .team_compo
 {
 	border-radius: 4px;

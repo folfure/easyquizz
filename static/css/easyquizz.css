@@ -13,6 +13,60 @@ body {
     user-select: none;
 }
 
+#slide
+{
+
+}
+
+.slide_text
+{
+	position:absolute;
+	z-index:1;
+	min-height:100%;
+	min-width:100%;
+	text-align: center;
+	vertical-align: middle;
+	display: table-cell;
+	top:50px;
+	font-size:25pt;
+}
+
+.slide_image
+{
+	position:absolute;
+	z-index:0;
+	min-height:100%;
+	min-width:100%;
+}
+
+.slide_video
+{
+	position:absolute;
+	z-index:0;
+	min-height:100%;
+	min-width:100%;
+}
+
+.slide_audio
+{
+	position:absolute;
+	z-index:0;
+}
+
+
+a.question:link, a.question:visited { 
+    color: grey;
+    text-decoration: none;
+    cursor: auto;
+}
+
+a.question:link:active, a.question:visited:active { 
+    color: yellow;
+}
+a.cur_question:link
+{
+	color:yellow;
+}
 
 .buzz
 {
@@ -36,7 +90,7 @@ body {
 
 .section
 {
-	border-style: solid;
+	border-style: none;
 	border-color:#999 ;
 	border-width:1px;
 	background:#555;

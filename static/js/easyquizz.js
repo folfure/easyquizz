@@ -8,7 +8,7 @@ function connect_player()
 {
 	var scheme = window.location.protocol == 'https:' ? 'wss://' : 'ws://';
 	var defaultAddress = scheme + window.location.host + '/buzz';
-	logBox = document.getElementById('log_window');
+
 	if (!('WebSocket' in window)) 
 	{
 		addToLog('WebSocket is not available');

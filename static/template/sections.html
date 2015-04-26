@@ -1,0 +1,18 @@
+<h4>Questions</h4>
+  {% for i,section in enumerate(sections) %}
+	<ul class="section">
+    <div onclick="$('.s{{i}}').toggle()">{{  (section['name'])}}</div>
+
+    {% for j,question in enumerate(section['questions']) %}
+	    {% if i==section_id and j==question_id %}
+	    {% set cls='cur_question'%}
+	    {% else %}
+	    {% set cls=''%}
+	    {% end %}
+	    <a class='s{{i}} question {{cls}}' style="display:none" href="javascript:go_to_question({{i}},{{j}})">{{j}}</a>
+    {% end %}
+    {% if i==section_id %}
+    <script type="text/javascript"> $('.s{{i}}').show()</script>
+    {% end %}
+  	</ul>
+  {% end %}

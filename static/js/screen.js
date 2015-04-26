@@ -2,18 +2,16 @@
 
 var can_send=true;
 var need_reconnect = false;
-function connect_admin() 
+function connect_screen() 
 {
-	var scheme = window.location.protocol == 'https:' ? 'wss://' : 'ws://';
-	var defaultAddress = scheme + window.location.host + '/buzz';
-	logBox = document.getElementById('log_window');
+
 	if (!('WebSocket' in window)) 
 	{
 		addToLog('WebSocket is not available');
 	}
 
 	var scheme = window.location.protocol == 'https:' ? 'wss://' : 'ws://';
-	var defaultAddress = scheme + window.location.host + ':80/adminws';
+	var defaultAddress = scheme + window.location.host + ':80/screenws';
 	var url = defaultAddress; 			//addressBox.value;
 	addToLog("Connecting to: "+url);
 
@@ -40,11 +38,7 @@ function connect_admin()
 	};
 	socket.onmessage = function (event) {
 		var obj = JSON.parse(event.data);
-		if (obj.type=='buzz')
-		{
-			addToLog('< ' + (obj.when )+' ' +obj.from);
-		}
-		else if (obj.type=='info')
+		if (obj.type=='info')
 		{
 			addToLog(obj.msg);
 		}
@@ -92,7 +86,7 @@ function reconnect()
 {
 	if (need_reconnect==true)
 	{
-		connect_admin();
+		connect_screen();
 		need_reconnect = false;
 		if (!socket) 
 		{
@@ -102,53 +96,9 @@ function reconnect()
 	}
 }
 
-function teams_changed(data)
-{
-  	reconnect();
-  	socket.send(JSON.stringify({
-  		type :'teams_compo',
-  		compo:data
-	}));
-}
 
-
-function reset_buzzers()
-{
-	reconnect();
-	socket.send(JSON.stringify({
-  		type :'reset_buzzers',
-	}));
-}
-
-function go_to_question(sec_id, q_id)
-{
-	reconnect();
-	socket.send(JSON.stringify({
-  		type :'go_to_question',
-  		sec_id:sec_id,
-  		q_id:q_id
-	}));
-}
 
 $(function() {
-	connect_admin();	
-
-	$(".players_list").sortable({
-	  connectWith: ".players_list",
-	  stop:function( event, ui ) {
-	    if (can_send)
-	    {
-	      can_send=false;
-	      var data={};
-	      $('ul.players_list').map(function(){
-	          var players = [];
-	          $(this).find("li.player_compo").each(function(index){players.push($(this).attr("id")); });
-	          data[$(this).attr("id")] = players;
-	      });
-	      teams_changed(data);
-	    }
-	  },
-	  start:function (event, ui) {can_send=true;}
-	}).disableSelection();
+	connect_screen();	
 
 });

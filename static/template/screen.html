@@ -17,12 +17,14 @@
 <body>
 <!-- Primary Page Layout————
 –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-<div id="scores" style="z-index:2;position:absolute">
+<div id="scores" >
 {% set team=None %}
 {% include "scores.html" %}
 </div>
+<div id="slides" >
 {%raw slide%}
-<div id="log_window" class='log' style="z-index:0;position:absolute">
+</div>
+<div id="log_window" class='log' >
       the log
       </div>
 <!-- End Document

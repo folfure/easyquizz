@@ -4,7 +4,7 @@ import os
 import logging
 import glob
 import pprint
-
+import json
 from collections import namedtuple
 
 # create logger with 'spam_application'
@@ -148,7 +148,7 @@ def get_slide_html(slide):
     if slide.text is not None :
         content += '<div id="slide" class="slide_text" style="z-index:1"><center>%s</center></div>'%slide.text 
     if slide.type == "image":
-        content +=  '<div id="slide" class="slide_image"><img width="100%%" height="100%%" src="/questions/%s" style="z-index:0"/></div>'%slide.ref
+        content +=  '<div id="slide" class="slide_image"><img  src="/questions/%s" style="z-index:0"/></div>'%slide.ref
     elif slide.type == 'audio':
         content +=  """<div id="slide" class="slide_audio"><audio autoplay>
   <source src="/questions/%s" type="audio/mpeg">
@@ -208,46 +208,99 @@ class QuizzPlayer(object):
                             question = slide(type="text", text=q, ref=None), slide(type="text", text=a, ref=None)
                             sec_questions.append(question)
             else:
-                #if section is a directory we iterate over the files (simple questions) and subdirectories (complex questions)
-                for sub_item in sorted(os.listdir(abs_item)):
-                    abs_sub_item = os.path.abspath(os.path.join(abs_item, sub_item))
-                    #question is a directory (complex questiosn with answer type that may be different from text)
-                    if os.path.isdir(abs_sub_item):
-                        #find question.* and answer
-                        questions = glob.glob(os.path.join(abs_sub_item,"question*.*"))
-                        answers = glob.glob(os.path.join(abs_sub_item,"answer*.*"))
-                        if not len(questions)==1 and not len(answers)==1:
-                            print "more than one question or answer in directory"
-                            continue
-                        question = os.path.basename(questions[0])
-                        answer = os.path.basename(answers[0])
-                        quest, qtyp = question.rsplit(".", 1)
-                        answ, atyp = answer.rsplit(".", 1)
-                        q = quest.replace("question","").lstrip('.')
-                        a = answ.replace("answer","").lstrip('.')
-                        question = slide(type=get_q_type(qtyp), ref=os.path.relpath(questions[0], path), text=q), slide(type=get_q_type(atyp), ref=os.path.relpath(answers[0], path), text=a)
-                        sec_questions.append(question)
-                    else:
-                        name_match = re_question_name.match(abs_sub_item)
-                        if not name_match:
-                            print( "question name %s is not supported. Please correct"%abs_sub_item)
-                            continue
-                        order, pts_gr, points, sname, qtype = groups = name_match.groups()
-                        qtype = qtype.lower()
-                        qtyp = get_q_type(qtype)
-                        if not qtyp:
-                            print qtype, "not supported"
-                            continue
 
-                        if qtyp == "text":
-                            with open(abs_sub_item) as f:
-                                for line in f:
-                                # print_html(line)
-                                    q, a = line.rstrip('\n').split(';')
-                                    question = slide(type="text", text=q, ref=None), slide(type="text", text=a, ref=None)
-                                    sec_questions.append(question)
+                #first check if we have a config.json in the folder that contains complex questions stuff
+                if os.path.exists(os.path.join(abs_item, "config.json")):
+                    config = json.load(open(os.path.join(abs_item, "config.json")))
+                    print config
+                    for question, answer in config["questions"]:
+                        #just a string
+                        if not isinstance(question, (list,tuple)):
+                            question = [question]
+                        if not isinstance(answer, (list, tuple)):
+                            answer = [answer]
+                        if len(question)>2:
+                            print "skipping question %s, because too complex"%question
+                            continue
+                        if len(answer)>2:
+                            print "skipping answer %s, because too complex"%answer
+                            continue
+                        try:
+                            qtext,qref=question
+                        except:
+                            qtext=question[0]
+                            qref=None
+                            qtyp="text"
                         else:
-                            sec_questions.append((slide(type=qtyp, ref=os.path.relpath(abs_sub_item, path), text=None), slide(type="text", text=sname, ref=None)))
+                            qref = os.path.abspath(os.path.join(abs_item,qref))
+                            if not os.path.exists(qref):
+                                print "skipping question %s because file %s doesn't exist"%(question,qref)
+                                continue
+                            qref = os.path.relpath(qref, path)
+                            qtyp = get_q_type(qref.rsplit('.',1)[-1])
+                            if not qtyp:
+                                print "type %s not supported"%qref
+                                continue
+                        try:
+                            atext,aref=answer
+                        except:
+                            atext=answer[0]
+                            aref=None
+                            atyp="text"
+                        else:
+                            aref = os.path.abspath(os.path.join(abs_item,aref))
+                            if not os.path.exists(aref):
+                                print "skipping answer %s because file %s doesn't exist"%(answer,qref)
+                                continue
+                            aref = os.path.relpath(aref, path)
+                            atyp = get_q_type(aref.rsplit('.',1)[-1])
+                            if not atyp:
+                                print "type %s not supported"%aref
+                                continue
+                        question = slide(type=qtyp, ref=qref, text=qtext), slide(type=atyp, ref=aref, text=atext)
+                        sec_questions.append(question)
+                        
+                else:
+                    #if section is a directory we iterate over the files (simple questions) and subdirectories (complex questions)
+                    for sub_item in sorted(os.listdir(abs_item)):
+                        abs_sub_item = os.path.abspath(os.path.join(abs_item, sub_item))
+                        #question is a directory (complex questiosn with answer type that may be different from text)
+                        if os.path.isdir(abs_sub_item):
+                            #find question.* and answer
+                            questions = glob.glob(os.path.join(abs_sub_item,"question*.*"))
+                            answers = glob.glob(os.path.join(abs_sub_item,"answer*.*"))
+                            if not len(questions)==1 and not len(answers)==1:
+                                print "more than one question or answer in directory"
+                                continue
+                            question = os.path.basename(questions[0])
+                            answer = os.path.basename(answers[0])
+                            quest, qtyp = question.rsplit(".", 1)
+                            answ, atyp = answer.rsplit(".", 1)
+                            q = quest.replace("question","").replace("_","'").lstrip('.')
+                            a = answ.replace("answer","").replace("_","'").lstrip('.')
+                            question = slide(type=get_q_type(qtyp), ref=os.path.relpath(questions[0], path), text=q), slide(type=get_q_type(atyp), ref=os.path.relpath(answers[0], path), text=a)
+                            sec_questions.append(question)
+                        else:
+                            name_match = re_question_name.match(abs_sub_item)
+                            if not name_match:
+                                print( "question name %s is not supported. Please correct"%abs_sub_item)
+                                continue
+                            order, pts_gr, points, sname, qtype = groups = name_match.groups()
+                            qtype = qtype.lower()
+                            qtyp = get_q_type(qtype)
+                            if not qtyp:
+                                print qtype, "not supported"
+                                continue
+
+                            if qtyp == "text":
+                                with open(abs_sub_item) as f:
+                                    for line in f:
+                                    # print_html(line)
+                                        q, a = line.rstrip('\n').split(';')
+                                        question = slide(type="text", text=q, ref=None), slide(type="text", text=a, ref=None)
+                                        sec_questions.append(question)
+                            else:
+                                sec_questions.append((slide(type=qtyp, ref=os.path.relpath(abs_sub_item, path), text=None), slide(type="text", text=sname, ref=None)))
 
             if sec_questions:
                 section["questions"] = []
@@ -270,7 +323,7 @@ class QuizzPlayer(object):
     def go_to_question(self, section_id, question_id):
         self.section_id = section_id
         self.question_id = question_id
-        self.question_status = self.NUMBER
+        self.question_status = self.QUESTION
 
         return self.get_current_content()
     def get_current_content(self):

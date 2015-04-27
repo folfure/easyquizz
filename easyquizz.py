@@ -192,7 +192,7 @@ class Game(object):
 
     def go_to_question(self, section_id, question_id):
         #to do deactivate buzzers ?
-        self.publish_screen(type="update_html", data={'slide':self.quizz_screen.go_to_question(section_id, question_id)})
+        self.publish_screen(type="update_html", data={'slides':self.quizz_screen.go_to_question(section_id, question_id)})
         self.publish_admin(type='update_html', data={'sections':TEMPLATES.load("sections.html").generate(sections=self.quizz_screen.sections, section_id=section_id, question_id=question_id)})
 
 
@@ -383,8 +383,11 @@ class WebSocketAdminHandler(tornado.websocket.WebSocketHandler):
             GAME.set_admin_socket(self)
             self.set_nodelay(True)
     
-    def on_message(self, message):
-        msg = json.loads(message)
+    def on_message(self, msg):
+        if msg=="Keep alive": 
+            print msg, "admin"
+            return
+        msg = json.loads(msg)
         typ = msg['type']
         if typ=='correct':
             GAME.publish_admin(type='info', msg='%s correct answer %.5f'%(self.player,msg['when']))
@@ -416,6 +419,9 @@ class WebSocketBuzzHandler(tornado.websocket.WebSocketHandler):
         self.set_nodelay(True)
     
     def on_message(self, message):
+        if msg=="Keep alive": 
+            print msg, self.player
+            return
         msg = json.loads(message)
         if msg['type']=='buzz':
             GAME.publish_all(type='info', msg='%s buzzed %.5f'%(self.player,msg['when']))
@@ -429,6 +435,10 @@ class WebSocketBuzzHandler(tornado.websocket.WebSocketHandler):
         msg.update(kwargs)
         self.write_message(msg)
     
+
+class EasyStaticFilehandler(tornado.web.StaticFileHandler):
+    def parse_url_path(self,path):
+        print path
 
 
 app = tornado.web.Application([

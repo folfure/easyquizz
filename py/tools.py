@@ -146,17 +146,17 @@ def get_q_type(ext):
 def get_slide_html(slide):
     content = ""
     if slide.text is not None :
-        content += '<div id="slide" class="slide_text" style="z-index:1"><center>%s</center></div>'%slide.text 
+        content += '<div id="slide" class="slide_text"><center>%s</center></div>'%slide.text 
     if slide.type == "image":
-        content +=  '<div id="slide" class="slide_image"><img  src="/questions/%s" style="z-index:0"/></div>'%slide.ref
+        content +=  '<div id="slide" class="slide_image"><center><img  src="/questions/%s"/></center></div>'%slide.ref
     elif slide.type == 'audio':
-        content +=  """<div id="slide" class="slide_audio"><audio autoplay>
+        content +=  """<div id="slide" class="slide_audio"><center><img  src="/static/img/sound.png"/></center><audio autoplay>
   <source src="/questions/%s" type="audio/mpeg">
 Your browser does not support the audio element.
 </audio></div>"""%slide.ref
     elif slide.type=="video":
         content +=  """
-            <div id="slide" class="slide_video"><center><video width="80%%" autoplay>
+            <div class="row"><div class="column eleven"><div id="slide" class="slide_video"><center><video width="80%%" autoplay>
           <source src="/questions/%s" type="video/mp4" >
         </video></center></div>
             """%slide.ref
@@ -357,11 +357,11 @@ class QuizzPlayer(object):
                     self.question_id = -1
         return self.get_current_content()
 
-    def next(self):
+    def next_slide(self):
         """
         return next slide content
         """
-        self.question_status = self.question_status+1%self.MAX_STATUS
+        self.question_status = (self.question_status+1)%self.MAX_STATUS
         if self.section_id == -1 or self.question_status == self.NUMBER:
             return self.next_question()
         else:

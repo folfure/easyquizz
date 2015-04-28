@@ -17,7 +17,7 @@
     <script src="static/js/vendor/jquery.ui.touch-punch.min.js"></script>
 
 </head>
-<body>
+<body class="admin">
 
   <div class="container">
     <h4>{{title}}</h4>
@@ -29,7 +29,7 @@
     </div>
 
     </div>
-    <div id="scores">
+    <div id="scores" class='scores-admin'>
     {% set team=None %}
     {% include "scores.html" %}
     </div>
@@ -87,12 +87,12 @@
     {% include "sections.html" %}
 </div>
 </div>
-<div class="six columns">
+<div class="six columns"
   controls
-      <input type='submit' class="button button-primary" value="Reset" onclick="reset_buzzers()">
-      <input type='submit' class="button button-primary je-dis-oui" style='background:green;border-color:#999' value="Je dis oui" onclick="je_dis_oui()">
-      <input type='submit' class="button button-primary je-dis-non" style='background:red;border-color:#999' value="Je dis non">
-
+      <input type='submit' class="button white" value="Reset" onclick="reset_buzzers()">
+      <input type='submit' class="button je-dis-oui" value="Je dis oui" onclick="je_dis_oui()">
+      <input type='submit' class="button je-dis-non" value="Je dis non">
+      <input type='submit' class="button white"  value="Next" onclick="next_slide()">
         <div id="log_window" class='log'>
       the log
       </div>

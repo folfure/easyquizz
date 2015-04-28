@@ -4,6 +4,14 @@ body {
   background-color: #444;
 }
 
+
+
+body, html
+{
+	height:100vh;
+	max-height:100vh;
+}
+
 .noselect {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -20,39 +28,46 @@ body {
 
 #slides
 {
-	min-height:100%;
-	min-width:100%;
+
 }
 
 .slide_text
 {
-	/*position:absolute;
-	z-index:1;*/
-	min-height:100%;
-	min-width:100%;
+	/*position:absolute;*/
+	z-index:1;
+	max-height:100vh;
 	text-align: center;
 	vertical-align: middle;
-	display: table-cell;
-	top:50px;
-	font-size:25pt;
+	font-size:35pt;
 }
 
 .slide_image
 {
-	/*position:absolute;
-	z-index:0;*/
-	height:100%;
-	max-height:800px;
-	width:100%;
-	max-width:600px;
+	/*position:absolute;*/
+	z-index:0;
+    max-height:80%;
+    max-width:100%;
+    height:auto;
+    width:auto;
+    overflow: hidden;
 }
+
+
+.slide_image img {
+    max-height:100vh;
+    max-width:100vw;
+    height:auto;
+    width:auto;
+    margin:auto;
+}
+
 
 .slide_video
 {
 	/*position:absolute;
 	z-index:0;*/
-	max-height:100%;
-	max-width:100%;
+	max-height:100vh;
+	max-width:100vw;
 }
 
 .slide_audio
@@ -96,6 +111,12 @@ a.cur_question:link
 	margin-bottom:0px;
 }
 
+
+input.white
+{
+	background:white;
+}
+
 .section
 {
 	border-style: none;
@@ -124,14 +145,14 @@ a.cur_question:link
 }
 
 
-.je-dis-oui
+input.je-dis-oui
 {
-	background-color:green;
+	background:#8FFFA2;
 }
 
-.je-dis-non
+input.je-dis-non
 {
-	background-color:red;
+	background:#FF978F;
 }
 
 .log

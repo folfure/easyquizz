@@ -1,9 +1,9 @@
-Vous viendrez me voir à la fin du cours Monsieur Feys;M. Demeulenne - 2000
-On n'y voit qued;Patouf - 2001
-Ce qui sort d'ici ne sort pas d'ici ne sort pas d'ici;Oli - 2007
-On brade !;Yvonne Poney - 2008
-Il fait chaud, c'est l'été;Benjamin CDP - 2009 
-Une choupe, un choint et chuut;Pintadeau - 2001
-De toutes façons, Folf, t'oses rien, saute par la fenêtre !;Mika - 2004
-Il a insulté ma mère ce fils pute;Yacine - 2006
-C'est comme Kwam ;Corinne - 2006
+<em>"Vous viendrez me voir à la fin du cours Monsieur Feys"</em>;M. Demeulenne - 2000
+<em>"On n'y voit qued"</em>;Patouf - 2001
+<em>"Ce qui sort d'ici ne sort pas d'ici ne sort pas d'ici"</em>;Oli - 2007
+<em>"On brade !"</em>;Yvonne Poney - 2008
+<em>"Il fait chaud, c'est l'été"</em>;Benjamin CDP - 2009 
+<em>"Une choupe, un choint et chuut"</em>;Pintadeau - 2001
+<em>"De toutes façons, Folf, t'oses rien, saute par la fenêtre !"</em>;Mika - 2004
+<em>"Il a insulté ma mère ce fils pute"</em>;Yacine - 2006
+<em>"C'est comme Kwam "</em>;Corinne - 2006

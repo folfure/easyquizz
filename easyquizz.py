@@ -193,8 +193,22 @@ class Game(object):
     def go_to_question(self, section_id, question_id):
         #to do deactivate buzzers ?
         self.publish_screen(type="update_html", data={'slides':self.quizz_screen.go_to_question(section_id, question_id)})
-        self.publish_admin(type='update_html', data={'sections':TEMPLATES.load("sections.html").generate(sections=self.quizz_screen.sections, section_id=section_id, question_id=question_id)})
+        self.update_admin_sections()
 
+    def update_admin_sections(self):
+        section_html = TEMPLATES.load("sections.html").generate(sections=self.quizz_screen.sections, 
+                                                                section_id=self.quizz_screen.section_id, 
+                                                                question_id=self.quizz_screen.question_id)
+        self.publish_admin(type='update_html', data={'sections':section_html})
+        
+
+    def next_slide(self):
+        self.publish_screen(type="update_html", data={'slides':self.quizz_screen.next_slide()})
+        self.update_admin_sections()
+
+    def next_question(self):
+        self.publish_screen(type="update_html", data={'slides':self.quizz_screen.next_question()})
+        self.update_admin_sections()
 
 
     def __del__(self):
@@ -397,6 +411,9 @@ class WebSocketAdminHandler(tornado.websocket.WebSocketHandler):
         elif typ=="go_to_question":
             print "go_to_question",msg
             GAME.go_to_question(section_id=msg['sec_id'], question_id=msg['q_id'])
+        elif typ=="next_slide":
+            print "go_to_question",msg
+            GAME.next_slide()
 
     def on_close(self):
         print "WebSocketAdminHandler.on_close : GAME admin", GAME.admin

@@ -37,6 +37,10 @@ function connect_admin()
 			logMessage += ' (' + extraInfo.join(', ') + ')';
 		}
 		addToLog(logMessage);
+		setInterval(function() {
+        if (socket.bufferedAmount == 0)
+          socket.send("Keep alive");
+        }, 30000 );
 	};
 	socket.onmessage = function (event) {
 		var obj = JSON.parse(event.data);
@@ -108,6 +112,22 @@ function teams_changed(data)
   	socket.send(JSON.stringify({
   		type :'teams_compo',
   		compo:data
+	}));
+}
+
+function next_slide()
+{
+	reconnect();
+	socket.send(JSON.stringify({
+  		type :'next_slide',
+	}));
+}
+
+function next_question()
+{
+	reconnect();
+	socket.send(JSON.stringify({
+  		type :'next_question',
 	}));
 }
 

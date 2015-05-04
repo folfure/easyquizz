@@ -1,0 +1,34 @@
+
+<div class="row">
+  {% for i,team in enumerate(teams) %}
+  {% if team[0] == 'unassigned' %}
+
+ <div class="four columns team_compo">
+   {{ escape(team[0]) }}
+  <ul id="{{ escape(team[0]) }}" class="players_list">
+  {% for player in sorted(team[1]) %}
+  <li class="ui-state-default player_compo"  id="{{ escape(player) }}">{{ escape(player) }}</li>
+ {% end %}
+
+  </ul>
+ </div>
+ {% end %}
+ {% end %}
+
+   {% for i,team in enumerate(teams) %}
+  <!--{% if team[0] != 'unassigned' %}-->
+
+ <div class="four columns team_compo">
+   {{ escape(team[0]) }}
+  <ul id="{{ escape(team[0]) }}" class="players_list">
+  {% for player in sorted(team[1]) %}
+  <li class="ui-state-default player_compo"  id="{{ escape(player) }}">{{ escape(player) }}</li>
+ {% end %}
+
+  </ul>
+ </div>
+ {% end %}
+ {% end %}
+
+
+</div>

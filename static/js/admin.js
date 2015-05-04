@@ -53,6 +53,15 @@ function connect_admin()
 		{
 			update_html(obj.data);
 		}
+        else if (obj.type=='player_status')
+		{
+			//addToLog(obj.data);
+            update_players_status(obj.data);
+		}
+        else if (obj.type=='buzzed')
+		{
+            highlightBuzzer(obj.player);
+		}
         else
         {
             console.log("je fais rien...");
@@ -107,6 +116,62 @@ function reconnect()
 	}
 }
 
+function update_players_status(status)
+{
+    for (var player in status) {
+        //alert(player+" -> "+status[player]);
+        $("#"+player).removeClass("can_answer");
+        $("#"+player).removeClass("cant_answer");
+        $("#"+player).removeClass("disconnected");
+        $("#"+player).addClass(status[player]);
+    }
+}
+
+/*HIghlight the player who just buzzed in the admin page.*/
+function highlightBuzzer(player)
+{
+    //alert(player);
+    $("#"+player).addClass("buzzed");
+}
+
+/*Remove highlight on players.*/
+function unhighlightBuzzers()
+{
+    $("li.player_compo").removeClass("buzzed");
+}
+function addNewPlayer(player)
+{
+    $("ul#unassigned").append('<li class="ui-state-default player_compo" id="'+player+'">'+player+'</li>')
+    
+}
+
+function je_dis_oui()
+{
+    reconnect();
+  	socket.send(JSON.stringify({
+  		type :'je_dis_oui',
+	}));
+    unhighlightBuzzers();
+}
+
+function start_game()
+{
+    reconnect();
+  	socket.send(JSON.stringify({
+  		type :'start_game',
+	}));
+    unhighlightBuzzers();
+}
+
+function je_dis_non()
+{
+    reconnect();
+  	socket.send(JSON.stringify({
+  		type :'je_dis_non',
+	}));
+    unhighlightBuzzers();
+}
+
 function teams_changed(data)
 {
   	reconnect();
@@ -114,6 +179,7 @@ function teams_changed(data)
   		type :'teams_compo',
   		compo:data
 	}));
+    unhighlightBuzzers();
 }
 
 function change_score(scored_team, score_inc)
@@ -124,6 +190,7 @@ function change_score(scored_team, score_inc)
   		team: scored_team,
         inc: score_inc
 	}));
+    unhighlightBuzzers();
 }
 
 
@@ -133,6 +200,25 @@ function reset_buzzers()
 	socket.send(JSON.stringify({
   		type :'reset_buzzers',
 	}));
+    unhighlightBuzzers();
+}
+
+function activate_all_buzzers()
+{
+	reconnect();
+	socket.send(JSON.stringify({
+  		type :'activate_all_buzzers',
+	}));
+    unhighlightBuzzers();
+}
+
+function deactivate_all_buzzers()
+{
+	reconnect();
+	socket.send(JSON.stringify({
+  		type :'deactivate_all_buzzers',
+	}));
+    unhighlightBuzzers();
 }
 
 $(function() {

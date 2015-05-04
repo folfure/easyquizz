@@ -181,3 +181,30 @@ td.dec_score
 	background-color:red;
 	color:white;
 }
+
+.buzzed
+{
+    /*color:green;*/
+    background-color:green;
+    font-weight: bold;    
+}
+
+.can_answer
+{
+    font-weight: bold;
+}
+
+.cant_answer
+{
+    text-decoration: line-through;
+}
+
+.connected
+{
+    color: white;
+}
+
+.disconnected
+{
+    color: #999;
+}

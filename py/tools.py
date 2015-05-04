@@ -281,11 +281,12 @@ class QuizzPlayer(object):
                             question = slide(type=get_q_type(qtyp), ref=os.path.relpath(questions[0], path), text=q), slide(type=get_q_type(atyp), ref=os.path.relpath(answers[0], path), text=a)
                             sec_questions.append(question)
                         else:
-                            name_match = re_question_name.match(abs_sub_item)
+                            name_match = re_question_name.match(sub_item)
                             if not name_match:
-                                print( "question name %s is not supported. Please correct"%abs_sub_item)
+                                print( "question name %s is not supported. Please correct"%sub_item)
                                 continue
                             order, pts_gr, points, sname, qtype = groups = name_match.groups()
+                            print order, pts_gr, points, sname, qtype
                             qtype = qtype.lower()
                             qtyp = get_q_type(qtype)
                             if not qtyp:
@@ -300,7 +301,7 @@ class QuizzPlayer(object):
                                         question = slide(type="text", text=q, ref=None), slide(type="text", text=a, ref=None)
                                         sec_questions.append(question)
                             else:
-                                sec_questions.append((slide(type=qtyp, ref=os.path.relpath(abs_sub_item, path), text=None), slide(type="text", text=sname, ref=None)))
+                                sec_questions.append((slide(type=qtyp, ref=os.path.relpath(abs_sub_item, path), text=None), slide(type="text", text=os.path.basename(sname), ref=None)))
 
             if sec_questions:
                 section["questions"] = []
@@ -382,27 +383,7 @@ def create_section(path):
 
 
 if __name__ == "__main__":
-    #QuizzPlayer("../questions")
-
-
-    for stuff in """monster cock
-anal dildo
-german pissing
-grandpa
-lesbian asslick
-neighbor
-poor girl
-prostate
-shemale domination
-female ejaculation
-stranger
-public masturbation
-homemade threesome
-interracial gangbang
-hairy teen
-extreme deepthroat
-double penetration""".split("\n"):
-        print ' '.join([s[0]+"".join(sorted(s[1:])) for s in stuff.split()]), ";", stuff
+    QuizzPlayer("../questions")
 
 
 

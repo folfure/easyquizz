@@ -683,11 +683,11 @@ class WebSocketBuzzHandler(tornado.websocket.WebSocketHandler):
         GAME.publish_all(type="info", msg="New Player Connected")
         GAME.check_status()
     
-    def on_message(self, message):
+    def on_message(self, msg):
         if msg=="Keep alive": 
             print msg, self.player
             return
-        msg = json.loads(message)
+        msg = json.loads(msg)
         if msg['type']=='buzz':
             GAME.publish_all(type='info', msg='%s buzzed %d'%(self.player,msg['when']))
             GAME.handle_buzz(self.player, int(msg['when']))

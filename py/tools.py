@@ -382,4 +382,28 @@ def create_section(path):
 
 
 if __name__ == "__main__":
-    QuizzPlayer("../questions")
+    #QuizzPlayer("../questions")
+
+
+    for stuff in """monster cock
+anal dildo
+german pissing
+grandpa
+lesbian asslick
+neighbor
+poor girl
+prostate
+shemale domination
+female ejaculation
+stranger
+public masturbation
+homemade threesome
+interracial gangbang
+hairy teen
+extreme deepthroat
+double penetration""".split("\n"):
+        print ' '.join([s[0]+"".join(sorted(s[1:])) for s in stuff.split()]), ";", stuff
+
+
+
+

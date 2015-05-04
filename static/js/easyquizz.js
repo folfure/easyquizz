@@ -50,9 +50,13 @@ function connect_player()
 		{
 			addToLog(obj.msg);
 		}
-		else if (obj.type='update_html')
+		else if (obj.type=='update_html')
 		{
 			update_html(obj.data);
+		}
+        else if (obj.type=='buzzerActive')
+		{
+            activateBuzzer(obj.on);
 		}
 	};
 	socket.onerror = function () {
@@ -101,6 +105,31 @@ function validateSurname()
 }
 
 
+function activateBuzzer(trueOrFalse)
+{
+    if (trueOrFalse == 1)
+    {
+        console.log("Activate Buzzers.");
+        //Change Buzzer style
+        $("#buzz").css("color", "white");
+        //Display button (could be improved in reactivating button)
+        $("#buzz").css("visibility","visible");
+    }else{
+        console.log("Deactivate Buzzers.");
+        //Change Buzzer style
+        $("#buzz").css("color", "#8E312F");
+        //Hide button (could be improved by inactivating button)
+        $("#buzz").css("visibility","hidden");
+    }
+    
+}
+
+function doNothing()
+{
+    
+    addToLog('Buzzer is inactive!');
+}
+
 function buzz()
 {
 	if (need_reconnect==true)
@@ -119,7 +148,7 @@ function buzz()
   	socket.send(JSON.stringify({
   		type :'buzz',
   		from : player,
-  		when : Date.now()/1000
+  		when : Date.now()
 }));
 }
 

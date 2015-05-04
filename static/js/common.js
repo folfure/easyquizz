@@ -25,7 +25,8 @@ function addToLog(log)
 function update_html(content)
 {
 	$.each(content, function (k, v) {
-		$('#'+k).html(v);
+		console.log("In update_html: key ="+k);
+        $('#'+k).html(v);
 	});
 
 }

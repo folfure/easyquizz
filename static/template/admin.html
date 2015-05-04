@@ -31,14 +31,14 @@
     </div>
     <div id="scores" class='scores-admin'>
     {% set team=None %}
-    {% include "scores.html" %}
+    {% include "scores_admin.html" %}
     </div>
     
 <div id="add_team_form">
     <form action="/game/add_team" method="post" id="team_form">
         <div class="row" >
           <div class="five columns">
-            <input type="text" placeholder="The A Team" name="team_name" id="new_team_name">
+            <input type="text" placeholder="Add New Team" name="team_name" id="new_team_name">
           </div>
           <div class="one columns">
             <input type='submit' class="button button-primary" value="Add">
@@ -47,39 +47,7 @@
     </form>
 </div>
 <div id="team_composition">
-<div class="row">
-  {% for i,team in enumerate(teams) %}
-  {% if team[0] == 'unassigned' %}
-
- <div class="four columns team_compo">
-   {{ escape(team[0]) }}
-  <ul id="{{ escape(team[0]) }}" class="players_list">
-  {% for player in sorted(team[1]) %}
-  <li class="ui-state-default player_compo"  id="{{ escape(player) }}">{{ escape(player) }}</li>
- {% end %}
-
-  </ul>
- </div>
- {% end %}
- {% end %}
-
-   {% for i,team in enumerate(teams) %}
-  {% if team[0] != 'unassigned' %}
-
- <div class="four columns team_compo">
-   {{ escape(team[0]) }}
-  <ul id="{{ escape(team[0]) }}" class="players_list">
-  {% for player in sorted(team[1]) %}
-  <li class="ui-state-default player_compo"  id="{{ escape(player) }}">{{ escape(player) }}</li>
- {% end %}
-
-  </ul>
- </div>
- {% end %}
- {% end %}
-
-
-</div>
+    {% include "team_composition.html" %}
 </div>
 <div class="row">
 <div class="six columns">
@@ -89,9 +57,12 @@
 </div>
 <div class="six columns"
   controls
-      <input type='submit' class="button white" value="Reset" onclick="reset_buzzers()">
-      <input type='submit' class="button je-dis-oui" value="Je dis oui" onclick="je_dis_oui()">
-      <input type='submit' class="button je-dis-non" value="Je dis non">
+      <input type='submit' class="button button-primary" value="Start Game" onclick="start_game()">
+      <input type='submit' class="button button-primary" value="Reset" onclick="reset_buzzers()">
+      <input type='submit' class="button button-primary" value="Activate All Buzzers" onclick="activate_all_buzzers()">
+      <input type='submit' class="button button-primary" value="Deactivate All Buzzers" onclick="deactivate_all_buzzers()">
+      <input type='submit' class="button button-primary je-dis-oui" style='background:green;border-color:#999' value="Je dis oui" onclick="je_dis_oui()">
+      <input type='submit' class="button button-primary je-dis-non" style='background:red;border-color:#999' value="Je dis non" onclick="je_dis_non()">
       <input type='submit' class="button white"  value="Next" onclick="next_slide()">
         <div id="log_window" class='log'>
       the log
@@ -104,10 +75,6 @@
 
 <!-- End Document
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <script>
- 
-  </script>
-
   <script src="/static/js/vendor/fastclick.js"></script>
 <script type='text/javascript'>
 var button = document.querySelector(".fastclick");

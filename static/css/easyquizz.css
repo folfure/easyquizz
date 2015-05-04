@@ -36,7 +36,7 @@ body, html
 	/*position:absolute;*/
 	z-index:1;
 	max-height:100vh;
-	min-height:100vh;
+	/*min-height:100vh;*/
 	text-align: center;
 	vertical-align: middle;
 	font-size:35pt;
@@ -98,7 +98,14 @@ a.cur_question:link
 	border-style: solid;
 	border-color:white ;
 	border-width:5px;
+    
 }
+#buzz .inactive
+{
+    background: white;
+    color: red;
+}
+
 .team_compo
 {
 	border-radius: 4px;
@@ -227,7 +234,19 @@ input.je-dis-non
 
 }
 
-
+td.inc_score, td.dec_score
+{
+    
+    padding:2px;
+}
+td.inc_score
+{
+    background-color: green;
+}
+td.dec_score
+{
+    background-color: red;
+}
 .joueur
 {
 	margin: 20px;
@@ -245,4 +264,31 @@ input.je-dis-non
 {
 	background-color:red;
 	color:white;
+}
+
+.buzzed
+{
+    /*color:green;*/
+    background-color:green;
+    font-weight: bold;    
+}
+
+.can_answer
+{
+    font-weight: bold;
+}
+
+.cant_answer
+{
+    text-decoration: line-through;
+}
+
+.connected
+{
+    color: white;
+}
+
+.disconnected
+{
+    color: #999;
 }

@@ -1,0 +1,82 @@
+{
+	"description":"",
+	"questions":
+	[
+				[
+					"Quel est le nom du stade de foot où se jouent les rencontres du KSC Lokeren ?",
+					"Le Stade Daknam"
+				],
+				[
+					"Quel club de foot évolue dans l'enceinte du Schiervelde Stadion ?",
+					"K.S.V. Roeselare"
+				],
+				[
+					"Quel est le nom du stade de foot où se jouent les rencontres du RC Strasbourg ?",
+					"Le Stade de la Meinau"
+				],
+				[
+					"Quel est le nom du stade de foot où se jouent les rencontres de Montpelier ?",
+					"Le Stade de la Mosson"
+				],
+				[
+					"Quel club de foot belge évolue dans le Stade Bollaert ?",
+					"RC Lens"
+				],
+				[
+					"Dans quel stade s'est déroulé la finale de l'Euro 2000 foot, remportée par la France ?",
+					"Le Stade de Feyenoord"
+				],
+				[
+					"Quel est le nom officiel du stade de foot surnommé San Siro ?",
+					"Le Stade Giuseppe Meazza"
+				],
+				[
+					"En Foot, quel est le nom du Stade de Courtrai ?",
+					"Le Stade des Éperons d'or"
+				],
+				[
+					"Dans quel Stade s'est déroulé la finale de la Coupe du Monde 2014 de football ?",
+					"Au Stade Maracanã de Rio de Janeiro"
+				],
+				[
+					"Quel est le nom du Central où se joue l'Open d'Australie de tennis ?",
+					"Rod Lever Arena"
+				],
+				[
+					"Sur quel pourcours de golf se déroule chaque année le Masters ?",
+					"Augusta National Golf Club"
+				],
+				[
+					"Dans quelle salle évoluent les NY Knicks à domicile ?",
+					"Madison Square Garden"
+				],
+				[
+					"Dans quel stade evolue l'Atletico Madrid en foot ?",
+					"Le Stade Vicente Calderón"
+				],
+				[
+					"Quel club de foot évolue à domicile dans l'Estádio da Luz ?",
+					"S.L. Benfica"
+				],
+				[
+					"Quel stade de Londres abrite traditionnelement les matchs du 15 à la rose ?",
+					"stade de Twickenham"
+				],
+				[
+					"Dans quel stade évoluait Arsenal en foot avant de déménager à l'Emirates ?",
+					"Highbury"
+				],
+				[
+					"Quels sont les tremplins qui forment ma tournée des 4 tremplin ?",
+					""
+				],
+				[
+					["Dans quelle ville a été érigé ce stade ?", "beijing.jpg"],
+					"Beijing"
+				],
+				[
+					["Quel est ce lieu?", "chépa.jpg"],
+					"???"
+				]				
+	]
+}

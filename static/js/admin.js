@@ -37,10 +37,13 @@ function connect_admin()
 			logMessage += ' (' + extraInfo.join(', ') + ')';
 		}
 		addToLog(logMessage);
+		setInterval(function() {
+        if (socket.bufferedAmount == 0)
+          socket.send("Keep alive");
+        }, 30000 );
 	};
 	socket.onmessage = function (event) {
 		var obj = JSON.parse(event.data);
-		console.log(obj);
         if (obj.type=='buzz')
 		{
 			addToLog('< ' + (obj.when )+' ' +obj.from);
@@ -193,6 +196,22 @@ function change_score(scored_team, score_inc)
     unhighlightBuzzers();
 }
 
+function next_slide()
+{
+	reconnect();
+	socket.send(JSON.stringify({
+  		type :'next_slide',
+	}));
+}
+
+function next_question()
+{
+	reconnect();
+	socket.send(JSON.stringify({
+  		type :'next_question',
+	}));
+}
+
 
 function reset_buzzers()
 {
@@ -219,6 +238,16 @@ function deactivate_all_buzzers()
   		type :'deactivate_all_buzzers',
 	}));
     unhighlightBuzzers();
+}
+
+function go_to_question(sec_id, q_id)
+{
+	reconnect();
+	socket.send(JSON.stringify({
+  		type :'go_to_question',
+  		sec_id:sec_id,
+  		q_id:q_id
+	}));
 }
 
 $(function() {

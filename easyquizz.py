@@ -22,18 +22,27 @@ class Game(object):
     
     def __init__(self, db_name):
         new_db = not os.path.exists(db_name)
+        #sqlite3 database
         self.db_conn = sqlite3.connect(db_name, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+        #cursor for making queries to sql db
         self.cursor = self.db_conn.cursor()
-        self.sockets = dict()           # {playerName: socketObject}. Dict in which key is the player name and the value is the socket object for this player. 
-        self.players = dict()           # {playerName: teamName}. Dict in which key is player name. Values is player team.
-        self.teams = dict()             # {teamName: set([players])}. Dict in which key is player name. Values is player team.
-        self.team_scores = dict()       # {teamName: [score, teamName]}.Dict in which key is team name. Values is a list where first item is the score, second item is the team name again.
-        self.player_scores = dict()     # {playerName: [score, playerName]}.Dict in which key is player name. Values is a list where first item is the score, second item is the player name again.
+		# map of player name to websocket {playerName: socketObject}
+        self.sockets = dict()
+        # map of player name to team name {playerName: teamName}
+        self.players = dict()
+        # map of team names to player set {teamName: set([players])}
+        self.teams = dict()
+        # websocket to screen display
+        self.screens = []
+        # map of team name to tuple (score, team name) {teamName: [score, teamName]}
+        self.team_scores = dict()
+        # map of player name to tuple (score, player name) {playerName: [score, playerName]}
+        self.player_scores = dict()
+        #admin web socket
         self.admin = None
-        self.current_section = 0
-        self.current_question = 0
+        self.quizz_screen = tools.QuizzPlayer("questions")
+        
         self.current_question_score = 5
-        self.sections = tools.create_sections("questions")
         self.referenceTimeStamp = self.getCurrentTimestamp() # Timestamp UTC. 
         self.gameOpen = 10                      # contains 0 when game is closed. COntains a timestamp when game is open. Timestamp correspond to the time when the game was open. 
         self.can_answer = self.teams.keys()     # ALl the teams can answer at the beginning.
@@ -291,6 +300,12 @@ class Game(object):
         return 0
 
 
+    def add_screen(self, screen):
+        self.screens.append(screen)
+
+    def remove_screen(self, screen):
+        self.screens.remove(screen)
+
     def set_admin(self):
         if self.admin:
             return 1
@@ -363,6 +378,12 @@ class Game(object):
         for socket in self.sockets.values():
             socket.write_message(msg)
 
+    def publish_screen(self, type, **kwargs):
+        msg = dict(type=type)
+        msg.update(kwargs)
+        for screen in self.screens:
+            screen.write_message(msg)
+
     def socket_disconnected(self, player):
         self.sockets.pop(player)
         self.publish_players(type='log',msg="User %s socket disconnected"%player)
@@ -381,12 +402,34 @@ class Game(object):
                 for new_p in set(new_players).difference(self.teams[new_team]) :
                     self.players[new_p] = new_team
                     self.cursor.execute("UPDATE player set team='%s' where name='%s'"%(new_team, new_p))
-                    GAME.publish_admin(type='info', msg="%s changed team to %s"%(new_p,new_team))
+                    self.publish_admin(type='info', msg="%s changed team to %s"%(new_p,new_team))
                     print new_p, new_team
-                    if GAME.publish_player(new_p, type='update_html', data={'scores':TEMPLATES.load("scores.html").generate(scores=scores, team=new_team)}):
-                        GAME.publish_admin(type='info', msg="%s NEED RELOAD PAGE SINCE HIS TEAM CHANGED"%new_p)
+                    if self.publish_player(new_p, type='update_html', data={'scores':TEMPLATES.load("scores.html").generate(scores=scores, team=new_team)}):
+                        self.publish_admin(type='info', msg="%s NEED RELOAD PAGE SINCE HIS TEAM CHANGED"%new_p)
 
                 self.teams[new_team] = new_players
+
+    def go_to_question(self, section_id, question_id):
+        #to do deactivate buzzers ?
+        self.publish_screen(type="update_html", data={'slides':self.quizz_screen.go_to_question(section_id, question_id)})
+        self.update_admin_sections()
+
+    def update_admin_sections(self):
+        section_html = TEMPLATES.load("sections.html").generate(sections=self.quizz_screen.sections, 
+                                                                section_id=self.quizz_screen.section_id, 
+                                                                question_id=self.quizz_screen.question_id)
+        self.publish_admin(type='update_html', data={'sections':section_html})
+        
+
+    def next_slide(self):
+        self.publish_screen(type="update_html", data={'slides':self.quizz_screen.next_slide()})
+        self.update_admin_sections()
+
+    def next_question(self):
+        self.publish_screen(type="update_html", data={'slides':self.quizz_screen.next_question()})
+        self.update_admin_sections()
+
+
     def __del__(self):
         self.db_conn.close()
 
@@ -424,7 +467,6 @@ class BaseHandler(tornado.web.RequestHandler):
 
 class LoginHandler(BaseHandler):
     def get(self,*args,**kwargs):
-        print "LoginHandler"
         params = self.request.arguments
         if params.has_key('logoff') :
             if '/admin' in args:
@@ -479,7 +521,6 @@ class LoginHandler(BaseHandler):
 class GameHandler(tornado.web.RequestHandler):
 
     def post(self,*args,**kwargs):
-        print "GameHandler"
         if '/add_team' in args: 
             team_name = self.get_argument("team_name")
             GAME.add_team(team_name)
@@ -491,7 +532,7 @@ class GameHandler(tornado.web.RequestHandler):
 # or he already connected and he is redirected to his buzz page. 
 class PlayerHandler(BaseHandler):
     def get(self,*args,**kwargs):
-        print "PlayerHandler"
+
         if not self.current_user:
             self.redirect('/login')
             return
@@ -526,41 +567,39 @@ class AdminHandler(BaseHandler):
             self.write(TEMPLATES.load("admin.html").generate(
                     title=TITLE, 
                     scores=GAME.getScores(),
-                    teams=GAME.teams.items(),
-                    sections=GAME.sections))
+                    teams=sorted(GAME.teams.items()),
+                    sections=GAME.quizz_screen.sections,
+                    section_id=GAME.quizz_screen.section_id, 
+                    question_id=GAME.quizz_screen.question_id))
             self.finish()
             return
+
+class WebSocketScreenHandler(tornado.websocket.WebSocketHandler):
+    def __init__(self,*args,**kwargs):
+        tornado.websocket.WebSocketHandler.__init__(self, *args,**kwargs)
+
+    def open(self, *args, **kwargs):
+        print("open", "WebSocketScreenHandler")
+        GAME.add_screen(self)
+        self.set_nodelay(True)
+    
+    def on_close(self):
+        GAME.remove_screen(self)
+
+    def send_msg(self, type, **kwargs):
+        msg = dict(type=type)
+        msg.update(kwargs)
+        self.write_message(msg)
 
 
 class HTMLQuizzHandler(tornado.web.RequestHandler):
 
     def get(self):
-        print "HTMLQuizzHandler"
-        section_id = self.get_argument('section',default=0)
-        question_id = self.get_argument('question',default=0)
-        section_id = int(section_id)
-        question_id = int(question_id)
-
-        section_id = max(0, min(int(section_id), len(GAME.sections)-1))
-        section = GAME.sections[section_id]
-
-        if question_id == -1:
-          question_id = len(section.questions)-1
-
-        question_id = max(0, min(question_id, len(section.questions)-1))
-        question = section.questions[question_id]
-
-        with open("static/template.html") as f:
-            self.write(f.read()%dict(  
-                  max_question=len(section.questions)-1, 
-                  max_section=len(GAME.sections)-1,
-                  section_id=section_id,
-                  question_id=question_id,
-                  questions=",".join(["'%s'"%i for i in section.get_contents()]),
-                  question_html=question.html(),
-                  section_title = section.name.upper(),
-                  question_id_disp=question_id+1
-                  ) )
+        self.write(TEMPLATES.load("screen.html").generate(
+                    title=TITLE,
+                    scores=sorted(GAME.team_scores.values()),
+                    slide=GAME.quizz_screen.get_current_content()
+                    ))
         self.finish()
 
 # Websocket to admin.
@@ -582,15 +621,16 @@ class WebSocketAdminHandler(tornado.websocket.WebSocketHandler):
         self.set_nodelay(True)
         GAME.publish_admin(type='info', msg='Reference Timestamp : %d'%GAME.referenceTimeStamp)
         GAME.check_status()
-    
-    def on_message(self, message):
-        msg = json.loads(message)
-        print msg
+
+    def on_message(self, msg):
+        if msg=="Keep alive": 
+            print msg, "admin"
+            return
+        msg = json.loads(msg)
         typ = msg['type']
         if typ=='correct':
             GAME.publish_admin(type='info', msg='%s correct answer %.5f'%(self.player,msg['when']))
         elif typ=='teams_compo':
-            print(msg['compo'])
             GAME.update_teams_composition(msg['compo'])
             GAME.publish_admin(type='info', msg="Teams changed")
         elif typ == 'score_change':
@@ -608,6 +648,12 @@ class WebSocketAdminHandler(tornado.websocket.WebSocketHandler):
             GAME.activate_all_buzzers()
         elif typ == "deactivate_all_buzzers":
             GAME.deactivate_all_buzzers()
+        elif typ=="go_to_question":
+            print "go_to_question",msg
+            GAME.go_to_question(section_id=msg['sec_id'], question_id=msg['q_id'])
+        elif typ=="next_slide":
+            print "go_to_question",msg
+            GAME.next_slide()
 
     def on_close(self):
         print "WebSocketAdminHandler.on_close : GAME admin", GAME.admin
@@ -638,9 +684,11 @@ class WebSocketBuzzHandler(tornado.websocket.WebSocketHandler):
         GAME.check_status()
     
     def on_message(self, message):
+        if msg=="Keep alive": 
+            print msg, self.player
+            return
         msg = json.loads(message)
         if msg['type']=='buzz':
-            print msg['when']
             GAME.publish_all(type='info', msg='%s buzzed %d'%(self.player,msg['when']))
             GAME.handle_buzz(self.player, int(msg['when']))
         
@@ -659,6 +707,7 @@ app = tornado.web.Application([
                                 (r'/pdata', PlayerHandler), 
                                 (r'/buzz', WebSocketBuzzHandler), 
                                 (r'/adminws', WebSocketAdminHandler), 
+                                (r'/screenws', WebSocketScreenHandler), 
                                 (r'/login(.*)', LoginHandler), 
                                 (r'/quizz',  HTMLQuizzHandler ),
                                 (r'/admin',  AdminHandler ),

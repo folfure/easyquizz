@@ -14,7 +14,7 @@ import sqlite3
 import time
 import thread
 
-TITLE ='Loose yourself to Buzz'
+TITLE ='BIG BUZZ'
 TEMPLATES = tornado.template.Loader("static/template")
 class Game(object):
     

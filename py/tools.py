@@ -121,7 +121,7 @@ class Section(object):
     return [i.source() for i in self.questions]
 
 
-supported_extensions = {'audio':'mp3 mov'.split(),
+supported_extensions = {'audio':'mp3 mov wav'.split(),
             'video':'mp4 mkv mpg mpeg avi'.split(),
             'image':'jpeg jpg png tiff bmp pdf'.split(),
             'text':'txt csv'.split()
@@ -258,9 +258,10 @@ class QuizzPlayer(object):
                                 print "type %s not supported"%aref
                                 continue
                         question = slide(type=qtyp, ref=qref, text=qtext), slide(type=atyp, ref=aref, text=atext)
+                        print question
                         sec_questions.append(question)
                         
-                else:
+                if True:
                     #if section is a directory we iterate over the files (simple questions) and subdirectories (complex questions)
                     for sub_item in sorted(os.listdir(abs_item)):
                         abs_sub_item = os.path.abspath(os.path.join(abs_item, sub_item))
@@ -327,13 +328,14 @@ class QuizzPlayer(object):
         self.question_status = self.QUESTION
 
         return self.get_current_content()
+
     def get_current_content(self):
         if self.section_id == -1:
             return '<div id="slide" class="slide_text">BIG BUZZ</div>'
         else:
             if self.question_status == self.NUMBER:
                 return """<div id='slide' class='slide_text'>
-        <h1>%d</h1></div>"""%self.question_id
+        <span class='huge'>%d</span></div>"""%(self.question_id+1)
             else:
                 return self.sections[self.section_id]['questions'][self.question_id][self.question_status-1]
 

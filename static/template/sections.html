@@ -1,6 +1,6 @@
 <h4>Questions</h4>
   {% for i,section in enumerate(sections) %}
-	<ul class="section">
+	<div class="section">
     <div onclick="$('.s{{i}}').toggle()">{{  (section['name'])}}</div>
 
     {% for j,question in enumerate(section['questions']) %}
@@ -14,5 +14,5 @@
     {% if i==section_id %}
     <script type="text/javascript"> $('.s{{i}}').show()</script>
     {% end %}
-  	</ul>
+  	</div>
   {% end %}

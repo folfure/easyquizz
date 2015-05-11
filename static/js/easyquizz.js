@@ -54,7 +54,7 @@ function connect_player()
 		{
 			update_html(obj.data);
 		}
-        else if (obj.type=='buzzerActive')
+        else if (obj.type=='buzzer_active')
 		{
             activateBuzzer(obj.on);
 		}

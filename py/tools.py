@@ -15,7 +15,7 @@ logger.setLevel(logging.DEBUG)
 # fh.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 # create formatter and add it to the handlers
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 # fh.setFormatter(formatter)
@@ -50,77 +50,6 @@ re_section_name = re.compile(r"([0-9]{2})\.([a-zA-Z0-9_\.\ '\-\_]+)([0-9]+pts){0
 re_question_name = re.compile(r"([0-9]+\.){0,1}(([0-9]+)pts\.){0,1}([a-zA-Z0-9_ -\[\]\(\).]+)\.([a-zA-Z0-9]+)")
 
 
-
-class Question(object):
-    def __init__(self, path):
-      self.path = path
-      name = os.path.basename(path)
-      name_match = re_question_name.match(name)
-      if not name_match:
-          print_html( "question name %s is not supported. Please correct"%name)
-          return
-      order, pts_gr, self.points, self.name, self.ext = groups = name_match.groups()
-
-      if self.points is None:
-          self.points = 1
-      self.points = int(self.points)
-
-    def __repr__(self):
-        return "%s(path='%s', name='%s',points=%d)"%(self.__class__.__name__, self.path, self.name, self.points)
-
-    def html(self):
-        return ""
-    def source(self):
-        return self.path
-
-
-class TextQuestion(Question):
-    def __init__(self,path, question):
-        Question.__init__(self, path)
-        self.question, self.answer=question.split(';')
-
-    def html(self):
-        return "<div id='question_fr' class='text_question' width='100%%' height='100%%'> %s ? </div>"%self.question.rstrip('? ')
-
-    def source(self):
-        return self.question
-
-
-class VideoQuestion(Question):
-      def __init__(self,path):
-            Question.__init__(self, path)
-      def html(self):
-            return """
-            <center><video width="80%%" autoplay id="question_fr">
-          <source src="%s" type="video/mp4" >
-        </video></center>
-            """%self.path
-
-
-class ImageQuestion(Question):
-    def __init__(self,path):
-        Question.__init__(self, path)
-    def html(self):
-        return "<img width='100%' height='100%' src='%s'/>"%self.path
-
-
-class MusicQuestion(Question):
-  types = {"mp3":"mpeg"}
-  def __init__(self, path):
-    Question.__init__(self, path)
-  def html(self):
-    return """<audio autoplay id='question_fr'>
-  <source src="%s" type="audio/mpeg">
-Your browser does not support the audio element.
-</audio>"""%self.path
-
-class Section(object):
-  def __init__(self,path):
-    pass
-  def get_contents(self):
-    return [i.source() for i in self.questions]
-
-
 supported_extensions = {'audio':'mp3 mov wav'.split(),
             'video':'mp4 mkv mpg mpeg avi'.split(),
             'image':'jpeg jpg png tiff bmp pdf'.split(),
@@ -136,30 +65,70 @@ for k,v in supported_extensions.iteritems():
 slide = namedtuple('slide', ('type','text','ref'))
 
 
+AUDIO_SLIDE = """
+<div id="slide" class="slide_audio %s">
+    <center>
+        <img  src="/static/img/sound.png"/>
+    </center>
+    <audio autoplay %s>
+        <source src="/questions/%s" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+</div>
+"""
+
+VIDEO_SLIDE = """
+<div class="row">
+    <div class="column twelve">
+        <div id="slide" class="slide_video %s" %s>
+            <center>
+                <video width="80%%" autoplay>
+                    <source src="/questions/%s" type="video/mp4" >
+                </video>
+            </center>
+        </div>
+    </div>
+</div>
+"""
+IMAGE_SLIDE = """
+<div id="slide" class="slide_image %s">
+    <center>
+        <img  src="/questions/%s"/>
+    </center>
+</div>
+"""
+TEXT_SLIDE = """
+<div id="slide" class="slide_text %s">
+    <center>
+        %s
+    </center>
+</div>
+"""
+
+
 def get_q_type(ext):
   try:
     return question_type_map[ext]
   except KeyError:
     return None
 
+def get_slide_preview(question, answer, question_id):
+    return ("%d."%question_id)+get_slide_html(question, preview=True)+get_slide_html(answer, preview=True, cls="answer")
 
-def get_slide_html(slide):
-    content = ""
+def get_slide_html(slide, preview=False, cls=""):
+    content = video_opts = audio_opts = ""
+    if preview:
+        audio_opts = "muted"
+        video_opts = "muted"
+
     if slide.text is not None :
-        content += '<div id="slide" class="slide_text"><center>%s</center></div>'%slide.text 
+        content += TEXT_SLIDE%(cls,slide.text)
     if slide.type == "image":
-        content +=  '<div id="slide" class="slide_image"><center><img  src="/questions/%s"/></center></div>'%slide.ref
+        content +=  IMAGE_SLIDE%(cls, slide.ref)
     elif slide.type == 'audio':
-        content +=  """<div id="slide" class="slide_audio"><center><img  src="/static/img/sound.png"/></center><audio autoplay>
-  <source src="/questions/%s" type="audio/mpeg">
-Your browser does not support the audio element.
-</audio></div>"""%slide.ref
+        content +=  AUDIO_SLIDE%(cls, audio_opts, slide.ref)
     elif slide.type=="video":
-        content +=  """
-            <div class="row"><div class="column eleven"><div id="slide" class="slide_video"><center><video width="80%%" autoplay>
-          <source src="/questions/%s" type="video/mp4" >
-        </video></center></div>
-            """%slide.ref
+        content +=  VIDEO_SLIDE%(cls, video_opts, slide.ref)
     return content
 
 
@@ -177,14 +146,14 @@ class QuizzPlayer(object):
         self.sections = []
         path = os.path.abspath(path)
         for item in sorted(os.listdir(path)):
-            print item
+            logger.debug( item)
             abs_item = os.path.join(path,item)
             section = {} 
               
             name = os.path.basename(abs_item)
             name_match = re_section_name.match(name)
             if not name_match:
-                print( "section name %s is not supported. Please correct"%name)
+                logger.debug(( "section name %s is not supported. Please correct"%name))
                 continue
             groups = name_match.groups()
             id, name = groups[:-1]
@@ -197,13 +166,13 @@ class QuizzPlayer(object):
             sec_questions = []
             #if section if a text file
             if not os.path.isdir(abs_item):
-                print name
+                logger.debug( name)
                 name, qtyp = name.rsplit('.',1)
                 qtyp = get_q_type(qtyp)
                 if qtyp == "text":
                     with open(abs_item) as f:
                         for line in f:
-                        # print_html(line)
+                        # logger.debug(_html(line))
                             q, a = line.rstrip('\n').split(';')
                             question = slide(type="text", text=q, ref=None), slide(type="text", text=a, ref=None)
                             sec_questions.append(question)
@@ -212,7 +181,7 @@ class QuizzPlayer(object):
                 #first check if we have a config.json in the folder that contains complex questions stuff
                 if os.path.exists(os.path.join(abs_item, "config.json")):
                     config = json.load(open(os.path.join(abs_item, "config.json")))
-                    print config
+                    logger.debug( config)
                     for question, answer in config["questions"]:
                         #just a string
                         if not isinstance(question, (list,tuple)):
@@ -220,10 +189,10 @@ class QuizzPlayer(object):
                         if not isinstance(answer, (list, tuple)):
                             answer = [answer]
                         if len(question)>2:
-                            print "skipping question %s, because too complex"%question
+                            logger.debug( "skipping question %s, because too complex"%question)
                             continue
                         if len(answer)>2:
-                            print "skipping answer %s, because too complex"%answer
+                            logger.debug( "skipping answer %s, because too complex"%answer)
                             continue
                         try:
                             qtext,qref=question
@@ -234,12 +203,12 @@ class QuizzPlayer(object):
                         else:
                             qref = os.path.abspath(os.path.join(abs_item,qref))
                             if not os.path.exists(qref):
-                                print "skipping question %s because file %s doesn't exist"%(question,qref)
+                                logger.debug( "skipping question %s because file %s doesn't exist"%(question,qref))
                                 continue
                             qref = os.path.relpath(qref, path)
                             qtyp = get_q_type(qref.rsplit('.',1)[-1])
                             if not qtyp:
-                                print "type %s not supported"%qref
+                                logger.debug( "type %s not supported"%qref)
                                 continue
                         try:
                             atext,aref=answer
@@ -250,18 +219,18 @@ class QuizzPlayer(object):
                         else:
                             aref = os.path.abspath(os.path.join(abs_item,aref))
                             if not os.path.exists(aref):
-                                print "skipping answer %s because file %s doesn't exist"%(answer,qref)
+                                logger.debug( "skipping answer %s because file %s doesn't exist"%(answer,qref))
                                 continue
                             aref = os.path.relpath(aref, path)
                             atyp = get_q_type(aref.rsplit('.',1)[-1])
                             if not atyp:
-                                print "type %s not supported"%aref
+                                logger.debug( "type %s not supported"%aref)
                                 continue
                         question = slide(type=qtyp, ref=qref, text=qtext), slide(type=atyp, ref=aref, text=atext)
-                        print question
+                        logger.debug( question)
                         sec_questions.append(question)
                         
-                if True:
+                else:
                     #if section is a directory we iterate over the files (simple questions) and subdirectories (complex questions)
                     for sub_item in sorted(os.listdir(abs_item)):
                         abs_sub_item = os.path.abspath(os.path.join(abs_item, sub_item))
@@ -271,7 +240,7 @@ class QuizzPlayer(object):
                             questions = glob.glob(os.path.join(abs_sub_item,"question*.*"))
                             answers = glob.glob(os.path.join(abs_sub_item,"answer*.*"))
                             if not len(questions)==1 and not len(answers)==1:
-                                print "more than one question or answer in directory"
+                                logger.debug( "more than one question or answer in directory")
                                 continue
                             question = os.path.basename(questions[0])
                             answer = os.path.basename(answers[0])
@@ -284,20 +253,20 @@ class QuizzPlayer(object):
                         else:
                             name_match = re_question_name.match(sub_item)
                             if not name_match:
-                                print( "question name %s is not supported. Please correct"%sub_item)
+                                logger.debug(( "question name %s is not supported. Please correct"%sub_item))
                                 continue
                             order, pts_gr, points, sname, qtype = groups = name_match.groups()
-                            print order, pts_gr, points, sname, qtype
+                            # logger.debug( order, pts_gr, points, sname, qtype)
                             qtype = qtype.lower()
                             qtyp = get_q_type(qtype)
                             if not qtyp:
-                                print qtype, "not supported"
+                                logger.debug( qtype, "not supported")
                                 continue
 
                             if qtyp == "text":
                                 with open(abs_sub_item) as f:
                                     for line in f:
-                                    # print_html(line)
+                                    # logger.debug(_html(line))
                                         q, a = line.rstrip('\n').split(';')
                                         question = slide(type="text", text=q, ref=None), slide(type="text", text=a, ref=None)
                                         sec_questions.append(question)
@@ -306,20 +275,23 @@ class QuizzPlayer(object):
 
             if sec_questions:
                 section["questions"] = []
+                section["questions_previews"] = []
                 for question, answer in sec_questions:
                     q = get_slide_html(question)
                     a = get_slide_html(answer)
                     if q and a:
                         section['questions'].append((q, a))
+                        q_preview = get_slide_preview(question, answer, len(section['questions']))
+                        section['questions_previews'].append(q_preview)
                     else:
-                        print question,"not ok"
+                        logger.debug( question,"not ok")
 
                 section["name"] = name
 
             if not section : continue
             self.sections.append(section)
-            # print section.questions
-            # print '</ul>'
+            # logger.debug( section.questions)
+            # logger.debug( '</ul>')
         # pprint.pprint(self.sections)
 
     def go_to_question(self, section_id, question_id):
@@ -339,6 +311,11 @@ class QuizzPlayer(object):
             else:
                 return self.sections[self.section_id]['questions'][self.question_id][self.question_status-1]
 
+    def get_current_resume(self):
+        if self.section_id == -1:
+            return '<div id="slide" class="slide_text">BIG BUZZ</div>'
+        return self.sections[self.section_id]['questions_previews'][self.question_id]
+ 
 
     def next_question(self):
         """

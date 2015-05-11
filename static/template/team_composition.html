@@ -2,7 +2,7 @@
   {% for i,team in enumerate(teams) %}
     {% if team[0] == 'unassigned' %}
 
- <div class="four columns team_compo">
+ <div class="three columns team_compo add_team_form">
       {{ escape(team[0]) }}
   <ul id="{{ escape(team[0]) }}" class="players_list">
       {% for player in sorted(team[1]) %}
@@ -17,7 +17,7 @@
    {% for i,team in enumerate(teams) %}
   {% if team[0] != 'unassigned' %}
 
- <div class="four columns team_compo">
+ <div class="three columns team_compo">
    {{ escape(team[0]) }}
   <ul id="{{ escape(team[0]) }}" class="players_list">
   {% for player in sorted(team[1]) %}

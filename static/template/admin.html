@@ -19,24 +19,24 @@
 </head>
 <body class="admin">
 
-  <div class="container">
-    <h4>{{title}}</h4>
-    <div id="name_form">
-
-    <div class="row">
-    <div class="six columns" id="user_name">
-      Admin
+<div class="container">
+  <div class="row">
+    <div class="columns three">
+      <img src="/static/img/user.png" onclick="$('.add_team_form').toggle()">
+      <img src="/static/img/calendar-blue.png" onclick="$('#sections').toggle()">
+      <img src="/static/img/log.png" onclick="$('#log_window').toggle()">
+    </div>
+    <div class="columns nine">
+      <div id="scores" class='scores-admin'>
+        {% set team=None %}
+        {% include "scores_admin.html" %}
+      </div>
     </div>
 
-    </div>
-    <div id="scores" class='scores-admin'>
-    {% set team=None %}
-    {% include "scores_admin.html" %}
-    </div>
-    
-<div id="add_team_form">
+  </div>
+  <div >
     <form action="/game/add_team" method="post" id="team_form">
-        <div class="row" >
+        <div class="row add_team_form">
           <div class="five columns">
             <input type="text" placeholder="Add New Team" name="team_name" id="new_team_name">
           </div>
@@ -45,32 +45,88 @@
           </div>
         </div>
     </form>
-</div>
-<div id="team_composition">
-    {% include "team_composition.html" %}
-</div>
-<div class="row">
-<div class="six columns">
-<div id="sections">
-    {% include "sections.html" %}
-</div>
-</div>
-<div class="six columns">
-      <input type='submit' class="button button-primary" value="Start Game" onclick="start_game()">
-      <input type='submit' class="button button-primary" value="Reset" onclick="reset_buzzers()">
-      <input type='submit' class="button button-primary" value="Activate All Buzzers" onclick="activate_all_buzzers()">
-      <input type='submit' class="button button-primary" value="Deactivate All Buzzers" onclick="deactivate_all_buzzers()">
-      <input type='submit' class="button button-primary je-dis-oui" style='background:green;border-color:#999' value="Je dis oui" onclick="je_dis_oui()">
-      <input type='submit' class="button button-primary je-dis-non" style='background:red;border-color:#999' value="Je dis non" onclick="je_dis_non()">
-      <input type='submit' class="button white"  value="Next" onclick="next_slide()">
-        <div id="log_window" class='log'>
-      the log
+  <div id="team_composition">
+      {% include "team_composition.html" %}
+  </div>
+  </div>
+
+  
+
+  <div class="row">
+
+    <div class="columns six">
+      <div id="sections">
+          {% include "sections.html" %}
       </div>
-</div>
-</div>
+    </div>
+
+    <div class="columns six">
+
+<h4>Controls</h4>
+
+
+  <div class="row ">
+    <div class='columns four control-button' onclick="je_dis_oui()">
+      <center>
+          <img src='/static/img/tick.png' >
+      </center>
+    </div>
+    <div class='columns four control-button'  onclick="je_dis_non()">
+      <center>
+          <img src='/static/img/cross.png' >
+      </center>
+    </div>
+    <div class='columns four control-button' onclick="next_slide()">
+      <center>
+          <img src='/static/img/next.png' >
+      </center>
+    </div>
+  </div>
+  <div class="row">
+    <div class="columns twelve" id='current_answer'>
+          <div class="resume" id="slides" >
+            {%raw slide%}
+          </div>
+    </div>
+  </div>
+
+  <div class="row ">
+    <!--<div class='columns one control-button' onclick="next_question()">
+      <center>
+          <img src='/static/img/next_question.png' ></br>next question
+      </center>
+    </div>-->
+    <div class='columns three control-button' onclick="start_game()">
+      <center>
+          <img src='/static/img/start.png' ></br>start game
+      </center>
+    </div>
+    <div class='columns three control-button' onclick="reset_buzzers()">
+      <center>
+          <img src='/static/img/reset.png' ></br>reset
+      </center>
+    </div>
+    <div class='columns three control-button' onclick="activate_all_buzzers()">
+      <center>
+          <img src='/static/img/connect.png' ></br>all buzzers
+      </center>
+    </div>
+    <div class='columns three control-button' onclick="deactivate_all_buzzers()">
+      <center>
+          <img src='/static/img/disconnect.png' ></br>all buzzers
+      </center>
+    </div>
+  </div>
+  </div>
+  </div>
+
+  <div id="log_window" class='log'>
+  the log
+  </div>
+  </div>
     
 
-  </div>
+</div>
 
 <!-- End Document
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->

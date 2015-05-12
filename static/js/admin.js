@@ -55,6 +55,7 @@ function connect_admin()
         else if (obj.type=='update_html')
 		{
 			update_html(obj.data);
+			setup_sortable_lists();
 		}
         else if (obj.type=='player_status')
 		{
@@ -250,9 +251,8 @@ function go_to_question(sec_id, q_id)
 	}));
 }
 
-$(function() {
-	connect_admin();	
-
+function setup_sortable_lists()
+{
 	$(".players_list").sortable({
 	  connectWith: ".players_list",
 	  stop:function( event, ui ) {
@@ -270,5 +270,12 @@ $(function() {
 	  },
 	  start:function (event, ui) {can_send=true;}
 	}).disableSelection();
+}
+
+$(function() {
+	connect_admin();	
+	setup_sortable_lists();
+
+	
 
 });

@@ -24,9 +24,7 @@ class Game(object):
         new_db = not os.path.exists(db_name)
         #sqlite3 database
         self.db_conn = sqlite3.connect(db_name, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
-        #cursor for making queries to sql db
-        self.cursor = self.db_conn.cursor()
-		# map of player name to websocket {playerName: socketObject}
+        # map of player name to websocket {playerName: socketObject}
         self.sockets = dict()
         # map of player name to team name {playerName: teamName}
         self.players = dict()
@@ -53,21 +51,23 @@ class Game(object):
 
         
         self.add_team("unassigned")
-        
+        cur = self.db_conn.cursor()
+    
         if new_db:
             print "creating db"
             with self.db_conn:
-                self.cursor.execute("CREATE TABLE player(name varchar unique, team varchar)")  
-                self.cursor.execute("CREATE TABLE team_score(team varchar unique, score integer)")  
-                self.cursor.execute("CREATE TABLE answer(player varchar, section_id integer, question_id integer, response_time real)")          
+                cur = self.db_conn.cursor()
+                cur.execute("CREATE TABLE player(name varchar unique, team varchar)")  
+                cur.execute("CREATE TABLE team_score(team varchar unique, score integer)")  
+                cur.execute("CREATE TABLE answer(player varchar, section_id integer, question_id integer, response_time real)")          
                 print "db created"
         else:
             #read db and fill players
             with self.db_conn:
-                for player, team in self.cursor.execute('SELECT name, team FROM player order by name'):
+                for player, team in cur.execute('SELECT name, team FROM player order by name'):
                     self.add_player(player,team)
                     print "adding " + player + " in " + team
-                for team, score in self.cursor.execute('SELECT team, score from team_score'):
+                for team, score in cur.execute('SELECT team, score from team_score'):
                     self.set_team_score(team, score, update_db=False)
         self.reset_buzzers()
     
@@ -178,9 +178,12 @@ class Game(object):
     # callback when a palyer buzzes (called from the BuzzWebSocketHandler)
     def handle_buzz(self, player, time_buzz):
         #self.reset_buzzers()
+        if self.current_player :
+            return
+
         player_team = self.players[player]
         self.current_team = player_team
-        if player_team in self.can_answer and self.is_game_open():
+        if player_team in self.can_answer and self.is_game_open() and player_team != "unassigned":
             # Player takes hand.
             # Block others buzzers
             self.publish_players(type='buzzer_active', on=0)
@@ -205,22 +208,14 @@ class Game(object):
             self.publish_all(GAME.publish_all(type='info', msg=str(cpt)+'...'))
             time.sleep(1)
             cpt = cpt - 1
-        #self.pass_and()
-        
-    # Launched at the end of the timer. Reactivate all buzzers.
-    def pass_and(self):
-        self.current_team = ""
-        self.current_player = ""
-        # Reactivate buzzers.
-        self.publish_all(GAME.publish_players(type='buzzer_active', on=1))
-        self.publish_all(GAME.publish_all(type='info', msg='End of Hand, buzzers are reactivated!'))
     
     # add new team to database and team scores
     def add_team(self,team):
         if team != 'unassigned':
             with self.db_conn:
+                cur = self.db_conn.cursor()
                 try:
-                    self.cursor.execute("INSERT INTO team_score(team, score) values (?,?)", (team, 0))
+                    cur.execute("INSERT INTO team_score(team, score) values (?,?)", (team, 0))
                     self.publish_admin(type='info', msg='db insert : %s score'%team)
                 except sqlite3.IntegrityError:
                     print "team already exists !!!!"
@@ -257,14 +252,15 @@ class Game(object):
     # Tested. OK.
     def set_team_score(self, team, new_score, update_db=True):
         # if team exists.
-        if self.team_exist(team):
+        if self.team_exist(team) and team != "unassigned":
             # Negative scores not allowed.
             new_score = max(new_score, 0)
             self.team_scores[team][0] = new_score
             if update_db:
                 with self.db_conn:
+                    cur = self.db_conn.cursor()
                     # try:
-                        self.cursor.execute("UPDATE  team_score set score='%d' where team='%s'"%(new_score, team))
+                    cur.execute("UPDATE  team_score set score='%d' where team='%s'"%(new_score, team))
                     # except:
                         # print "Error : could not update team socre to db !"
             self.publish_all(type='info', msg="New Score for team %s: %d"%(team, new_score))
@@ -307,8 +303,9 @@ class Game(object):
     def create_player(self, player, team="unassigned"):
         if not self.players.has_key(player):
             with self.db_conn:
+                cur = self.db_conn.cursor()
                 try:
-                    self.cursor.execute("INSERT INTO player(name, team) values (?,?)", (player, team))
+                    cur.execute("INSERT INTO player(name, team) values (?,?)", (player, team))
                     self.add_player(player, team)
                     self.publish_admin(type='info', msg='db insert : %s'%player)
                 except sqlite3.IntegrityError:
@@ -412,21 +409,25 @@ class Game(object):
         self.admin=None
 
     def update_teams_composition(self, composition):
-        scores = self.get_scores()
         with self.db_conn:
+            cur = self.db_conn.cursor()
             for new_team, new_players in composition.iteritems():
                 new_players = set(new_players)
                 #update information of new players only (if moved then he would be )
                 self.add_team(new_team)
                 for new_p in set(new_players).difference(self.teams[new_team]) :
                     self.players[new_p] = new_team
-                    self.cursor.execute("UPDATE player set team='%s' where name='%s'"%(new_team, new_p))
+                    cur.execute("UPDATE player set team='%s' where name='%s'"%(new_team, new_p))
                     self.publish_admin(type='info', msg="%s changed team to %s"%(new_p,new_team))
                     print new_p, new_team
-                    if self.publish_player(new_p, type='update_html', data={'scores':TEMPLATES.load("scores.html").generate(scores=scores, team=new_team)}):
-                        self.publish_admin(type='info', msg="%s NEED RELOAD PAGE SINCE HIS TEAM CHANGED"%new_p)
-
                 self.teams[new_team] = new_players
+        self.publish_team_compositions()
+
+    def publish_team_compositions(self):
+        scores = self.get_scores()
+        for team, players in self.teams.iteritems():
+            for player in players:
+                self.publish_player(player, type='update_html', data={'scores':TEMPLATES.load("scores.html").generate(scores=scores, team=team)})
 
     def go_to_question(self, section_id, question_id):
         #to do deactivate buzzers ?
@@ -558,6 +559,7 @@ class PlayerHandler(BaseHandler):
             return
 
         player = tornado.escape.xhtml_escape(self.current_user)
+        GAME.create_player(player)
         if GAME.players.has_key(player):    
             if self.request.uri == '/pdata':
                 output = json.dumps(GAME.get_player_data(player))

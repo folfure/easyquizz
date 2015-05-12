@@ -15,7 +15,7 @@ logger.setLevel(logging.DEBUG)
 # fh.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.DEBUG)
 # create formatter and add it to the handlers
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 # fh.setFormatter(formatter)
@@ -71,7 +71,7 @@ AUDIO_SLIDE = """
         <img  src="/static/img/sound.png"/>
     </center>
     <audio autoplay %s>
-        <source src="/questions/%s" type="audio/mpeg">
+        <source src="/questions/%s" type="audio/mp4">
         Your browser does not support the audio element.
     </audio>
 </div>
@@ -197,9 +197,14 @@ class QuizzPlayer(object):
                         try:
                             qtext,qref=question
                         except:
-                            qtext=question[0]
-                            qref=None
-                            qtyp="text"
+                            qref = question[0]
+                            qtyp = get_q_type(qref.rsplit('.',1)[-1])
+                            qtext = None
+  
+                            if not os.path.exists(os.path.join(abs_item, qref)) or qtyp is None:
+                                qtext=question[0]
+                                qref=None
+                                qtyp="text"
                         else:
                             qref = os.path.abspath(os.path.join(abs_item,qref))
                             if not os.path.exists(qref):
@@ -213,9 +218,14 @@ class QuizzPlayer(object):
                         try:
                             atext,aref=answer
                         except:
-                            atext=answer[0]
-                            aref=None
-                            atyp="text"
+                            aref = answer[0]
+                            atyp = get_q_type(aref.rsplit('.',1)[-1])
+                            atext = None
+                            # logger.debug(str(aref) + " " + str(atyp))
+                            if not os.path.exists(os.path.join(abs_item, aref)) or atyp is None:
+                                atext=answer[0]
+                                aref=None
+                                atyp="text"
                         else:
                             aref = os.path.abspath(os.path.join(abs_item,aref))
                             if not os.path.exists(aref):

@@ -13,7 +13,6 @@ TO DO
  ok if bad answer -> he personnaly is deactivated until next question and other teams can answer and his team is currently deacivated 
 
 2. Misc.
- - correct admin problem when cookie and no logoff (seems already corrected)
  ok put timer in javascript on client side to avoid consecutive click that could put server on knees
     Not needed anymore since the buzzers are deactivated immediately after the first incoming buzz.
  

@@ -1,0 +1,33 @@
+{
+	"description":"",
+	"questions":[
+			[
+				"01.calogero.mpeg",
+				["Plus besoin de parler","01.calogero_slution.mpeg"]
+			],
+			[
+				"02.happy.mpeg",
+				["what happiness is to you","02.happy_solution.mpeg"]
+			],
+			[
+				"03.lenvie.mpeg",
+				["Et toucher la mis?re pour respecter l'argent","03.lenvie_solution.mpeg"]
+			],
+			[
+				"04.magic_system.mpeg",
+				["Oh oh oh oh oh oh ","04.magic_system_solution.mpeg"]
+			],
+			[
+				"05.words.mpeg",
+				["believe it's true 'cause","05.words_solution.mpeg"]
+			],
+			[
+				"06.westlife.mpeg",
+				["she's got a choice","06.westlife_solution.mpeg"]
+			],
+			[
+				"07.route.mpeg",
+				["Sur ma route y'a eu un tas de bouchons","07.route_solution.mpeg"]
+			]
+	]
+}

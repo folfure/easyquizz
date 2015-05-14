@@ -39,6 +39,10 @@ function connect_player()
 			logMessage += ' (' + extraInfo.join(', ') + ')';
 		}
 		addToLog(logMessage);
+		setInterval(function() {
+        if (socket.bufferedAmount == 0)
+          socket.send("Keep alive");
+        }, 30000 );
 	};
 	socket.onmessage = function (event) {
 		var obj = JSON.parse(event.data);

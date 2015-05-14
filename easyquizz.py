@@ -16,6 +16,7 @@ import thread
 
 TITLE ='BIG BUZZ'
 TEMPLATES = tornado.template.Loader("static/template")
+TEAM_SOUNDS = ["buzz.mov", "buzz-2.mov"] 
 class Game(object):
     
     TIMER_DURATION = 5          # time to answer a question in seconds
@@ -46,7 +47,6 @@ class Game(object):
         self.reference_time_stamp = self.get_current_time_stamp() # Timestamp UTC. 
         self.game_open = 10                      # contains 0 when game is closed. COntains a timestamp when game is open. Timestamp correspond to the time when the game was open. 
         self.can_answer = self.teams.keys()     # ALl the teams can answer at the beginning.
-        self.cant_answer = []
         print "Reference Timestamp: "+str(self.reference_time_stamp)
 
         
@@ -89,13 +89,14 @@ class Game(object):
     # Triggered by game master at the end of the timer, when team that buzzed gives the wrong answer.
     # Team is excluded from the game for the current question.
     def je_dis_non(self):
-        
+        self.publish_screen(type='play')
         if not self.current_team or not self.current_player:
             self.publish_admin(type='info',msg="warning : no active team or player")
         else:
             print 'Wrong answer from '+self.current_team+", game continues."
             self.publish_all(type='info', msg='Wrong answer from '+self.current_team+", team excluded, games continue!")
             # Store team in can't answer team list.
+            self.reset_exclude()
             self.exclude([self.current_team])
             # Reactivate buzzers for the other to continue the same question.
             self.reset_buzzers()
@@ -112,7 +113,6 @@ class Game(object):
     # Triggered by game master at the end of the timer, when team that buzzed gives the wrong answer.
     # Team score is increase by current question score and game is closed.
     def je_dis_oui(self):
-        
         if not self.current_team or not self.current_player:
             self.publish_admin(type='info',msg="warning : no active team or player")
         else:
@@ -123,6 +123,7 @@ class Game(object):
             self.update_score(self.current_team, self.current_question_score, self.current_player)
             #print self.player_scores
             self.close_game()
+            self.next_slide()
         self.check_status()
         
         
@@ -130,23 +131,23 @@ class Game(object):
     def include(self, teams):
         for team in teams:
             self.can_answer.append(team)
-            self.cant_answer.remove(team)
     
+    def reset_exclude(self):
+        self.can_answer = self.teams.keys()
+
     # Exclude teams from the current question.
     def exclude(self, teams):
+        #if everyone is excluded, then we reactivate everyone but the just excluded one
         for team in teams:
             self.can_answer.remove(team)
-            self.cant_answer.append(team)
     
     def activate_all_buzzers(self):
         self.can_answer = self.teams.keys()
-        self.cant_answer = []
         self.reset_buzzers()
         self.publish_all(type='info', msg='Activating All Buzzers!')
         
     def deactivate_all_buzzers(self):
         self.can_answer = []
-        self.cant_answer = self.teams.keys()
         self.reset_buzzers()
         self.publish_players(type='buzzer_active', on=0)
         self.publish_all(type='info', msg='Deactivating All Buzzers!')
@@ -174,11 +175,14 @@ class Game(object):
         self.current_player = None
         #self.reset_buzzers()
         self.publish_all(type='info', msg='Game is over.')
+        self.check_status()
+
     
     # callback when a palyer buzzes (called from the BuzzWebSocketHandler)
     def handle_buzz(self, player, time_buzz):
         #self.reset_buzzers()
         if self.current_player :
+            self.publish_all(type='info', msg='Fast click : no effect buzz from %s'%player)
             return
 
         player_team = self.players[player]
@@ -186,13 +190,16 @@ class Game(object):
         if player_team in self.can_answer and self.is_game_open() and player_team != "unassigned":
             # Player takes hand.
             # Block others buzzers
+            self.publish_screen(type='pause')
+
             self.publish_players(type='buzzer_active', on=0)
             self.publish_all(type='info', msg='All buzzers are blocked')
              
             self.current_team = player_team
             self.current_player = player
             self.publish_all(type='info', msg='Team %s has hand for 5 seconds'%player_team)
-            self.publish_admin(type='buzzed', player=player)
+            self.publish_admin(type='buzzed', player=player, team=player_team)
+            self.publish_screen(type='buzzed', player=player, team=player_team)
             # start timer
             try:
                 thread.start_new_thread( self.simple_timer, (GAME.TIMER_DURATION, ) )
@@ -286,11 +293,13 @@ class Game(object):
             team = self.players[player]
             self.publish_player(player, type='update_html', data={'scores':TEMPLATES.load("scores.html").generate(scores=scores, team=team)})
         self.publish_admin(type='update_html', data={'scores':TEMPLATES.load("scores_admin.html").generate(scores=scores, team="")})
+        self.publish_screen(type='update_html', data={'scores':TEMPLATES.load("scores_screen.html").generate(scores=sorted(scores,key=lambda it:it[1]), team="")})
     
     # Notifies admin with team composition.
     def notify_teams_composition(self):
+        sounds = [(team,TEAM_SOUNDS[i%len(TEAM_SOUNDS)]) for i,team in enumerate(self.teams)]
         self.publish_admin(type='update_html', data={'team_composition':TEMPLATES.load("team_composition.html").generate(teams=self.teams.items())})
-        
+        self.publish_screen(type='update_html', data={'sounds':TEMPLATES.load("team_sounds.html").generate(sounds=sounds)})
     
     def add_player(self,player,team="unassigned"):            
         t = self.add_team(team)
@@ -433,6 +442,7 @@ class Game(object):
         #to do deactivate buzzers ?
         self.quizz_screen.go_to_question(section_id, question_id)
         self.update_admin_and_screen_questions()
+        self.set_game_status()
 
     def update_admin_and_screen_questions(self):
         section_html = TEMPLATES.load("sections.html").generate(sections=self.quizz_screen.sections, 
@@ -444,11 +454,21 @@ class Game(object):
     def next_slide(self):
         self.quizz_screen.next_slide()
         self.update_admin_and_screen_questions()
+        self.set_game_status()
+
+    def set_game_status(self):
+        if self.quizz_screen.question_status == tools.QuizzPlayer.QUESTION:
+            self.start_game()
+
+        else:
+            self.close_game()
+
+
+
 
     def next_question(self):
         self.quizz_screen.next_question()
         self.update_admin_and_screen_questions()
-
 
     def __del__(self):
         self.db_conn.close()
@@ -622,8 +642,9 @@ class HTMLQuizzHandler(tornado.web.RequestHandler):
         self.write(TEMPLATES.load("screen.html").generate(
                     title=TITLE,
                     scores=sorted(GAME.team_scores.values()),
-                    slide=GAME.quizz_screen.get_current_content()
-                    ))
+                    slide=GAME.quizz_screen.get_current_content(),
+                    sounds = [(team,TEAM_SOUNDS[i%len(TEAM_SOUNDS)])for i,team in enumerate(GAME.teams)])
+                    )
         self.finish()
 
 # Websocket to admin.

@@ -119,11 +119,11 @@
                 context.beginPath();
                 context.arc(x, y, radius, convertToDeg(timer.seconds * 6 * 10), convertToDeg(0));                                
                 context.fillStrokeShape(this);
-                this.stroke('hsl(120,'+(100.0*timer.second/5.0)+'%,100%)');
+                this.stroke('hsl(120,'+(100.0*timer.seconds/5.0)+'%,100%)');
 
 
                 $(settings.selectors.value_seconds).html((6 - timer.seconds).toFixed(1));
-                $(settings.selectors.value_seconds).html((timer.second).toFixed(0));
+                $(settings.selectors.value_seconds).html((timer.seconds).toFixed(0));
                 
             },
             stroke: settings.seconds.borderColor,

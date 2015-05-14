@@ -70,8 +70,8 @@ AUDIO_SLIDE = """
     <center>
         <img  src="/static/img/sound.png"/>
     </center>
-    <audio autoplay %s>
-        <source src="/questions/%s" type="audio/mp4">
+    <audio autoplay class="playable" %s>
+        <source src="%s" type="audio/mp4">
         Your browser does not support the audio element.
     </audio>
 </div>
@@ -80,10 +80,10 @@ AUDIO_SLIDE = """
 VIDEO_SLIDE = """
 <div class="row">
     <div class="column twelve">
-        <div id="slide" class="slide_video %s" %s>
+        <div id="slide" class="slide_video %s">
             <center>
-                <video width="80%%" autoplay>
-                    <source src="/questions/%s" type="video/mp4" >
+                <video height="80%%" autoplay  %s class="playable">
+                    <source src="%s" type="video/mp4" >
                 </video>
             </center>
         </div>
@@ -93,7 +93,7 @@ VIDEO_SLIDE = """
 IMAGE_SLIDE = """
 <div id="slide" class="slide_image %s">
     <center>
-        <img  src="/questions/%s"/>
+        <img  src="%s"/>
     </center>
 </div>
 """
@@ -124,11 +124,11 @@ def get_slide_html(slide, preview=False, cls=""):
     if slide.text is not None :
         content += TEXT_SLIDE%(cls,slide.text)
     if slide.type == "image":
-        content +=  IMAGE_SLIDE%(cls, slide.ref)
+        content +=  IMAGE_SLIDE%(cls, "/questions/"+slide.ref)
     elif slide.type == 'audio':
-        content +=  AUDIO_SLIDE%(cls, audio_opts, slide.ref)
+        content +=  AUDIO_SLIDE%(cls, audio_opts, "/questions/"+slide.ref)
     elif slide.type=="video":
-        content +=  VIDEO_SLIDE%(cls, video_opts, slide.ref)
+        content +=  VIDEO_SLIDE%(cls, video_opts, "/questions/"+slide.ref)
     return content
 
 
@@ -197,20 +197,23 @@ class QuizzPlayer(object):
                         try:
                             qtext,qref=question
                         except:
-                            qref = question[0]
+                            qref = os.path.relpath(os.path.join(abs_item,question[0]),path)
                             qtyp = get_q_type(qref.rsplit('.',1)[-1])
                             qtext = None
   
-                            if not os.path.exists(os.path.join(abs_item, qref)) or qtyp is None:
+                            if not os.path.exists(os.path.join(path, qref)) or qtyp is None:
                                 qtext=question[0]
                                 qref=None
                                 qtyp="text"
+
                         else:
                             qref = os.path.abspath(os.path.join(abs_item,qref))
                             if not os.path.exists(qref):
                                 logger.debug( "skipping question %s because file %s doesn't exist"%(question,qref))
                                 continue
+                            print qref
                             qref = os.path.relpath(qref, path)
+                            print qref
                             qtyp = get_q_type(qref.rsplit('.',1)[-1])
                             if not qtyp:
                                 logger.debug( "type %s not supported"%qref)
@@ -218,11 +221,11 @@ class QuizzPlayer(object):
                         try:
                             atext,aref=answer
                         except:
-                            aref = answer[0]
+                            aref = os.path.relpath(os.path.join(abs_item,answer[0]),path)
                             atyp = get_q_type(aref.rsplit('.',1)[-1])
                             atext = None
                             # logger.debug(str(aref) + " " + str(atyp))
-                            if not os.path.exists(os.path.join(abs_item, aref)) or atyp is None:
+                            if not os.path.exists(os.path.join(path, aref)) or atyp is None:
                                 atext=answer[0]
                                 aref=None
                                 atyp="text"
@@ -307,13 +310,30 @@ class QuizzPlayer(object):
     def go_to_question(self, section_id, question_id):
         self.section_id = section_id
         self.question_id = question_id
-        self.question_status = self.QUESTION
+        self.question_status = self.NUMBER
 
         return self.get_current_content()
 
     def get_current_content(self):
         if self.section_id == -1:
-            return '<div id="slide" class="slide_text">BIG BUZZ</div>'
+            return '''<div style="max-height:100vh">
+                        <div id="slide" class="slide_text title">
+                            <center>BIG BUZZ</center>
+                        </div>
+                        <div style="position:relative;top:-50vh">
+                    '''+VIDEO_SLIDE%('','','/static/sound/aerobic.mp4')+"</div></div>"
+        elif self.question_id == -1:
+                return '''<div>
+                        <div id="slide" class="slide_text section_title">
+                            <center>%s</center>
+
+                        </div>
+                        <audio id="sound_section">
+        <audio autoplay>
+        <source src="/static/sound/iron.mov" type="audio/mp4">
+    </audio>
+                    </div>'''%self.sections[self.section_id]['name']
+    
         else:
             if self.question_status == self.NUMBER:
                 return """<div id='slide' class='slide_text'>
@@ -324,6 +344,8 @@ class QuizzPlayer(object):
     def get_current_resume(self):
         if self.section_id == -1:
             return '<div id="slide" class="slide_text">BIG BUZZ</div>'
+        elif self.question_id == -1:
+            return '<div id="slide" class="slide_text">%s</div>'%self.sections[self.section_id]['name']
         return self.sections[self.section_id]['questions_previews'][self.question_id]
  
 
@@ -336,23 +358,27 @@ class QuizzPlayer(object):
         #if we were at the intro page we go tho first question of first section
         if self.section_id == -1:
             self.section_id = 0
-            self.question_id = 0
+            self.question_id = -1
         else:
             self.question_id+=1
             if self.question_id >= len(self.sections[self.section_id]['questions']):
-                self.question_id = 0
+                self.question_id = -1
                 self.section_id += 1
                 if self.section_id >= len(self.sections):
                     self.section_id = -1 
                     self.question_id = -1
+        if self.question_id == -1:
+            self.question_status == self.NUMBER
         return self.get_current_content()
 
     def next_slide(self):
         """
         return next slide content
         """
+        print self.section_id, self.question_id, self.question_status
+
         self.question_status = (self.question_status+1)%self.MAX_STATUS
-        if self.section_id == -1 or self.question_status == self.NUMBER:
+        if self.section_id == -1 or self.question_id == -1 or self.question_status == self.NUMBER:
             return self.next_question()
         else:
             return self.get_current_content()

@@ -65,6 +65,7 @@ function connect_admin()
         else if (obj.type=='buzzed')
 		{
             highlightBuzzer(obj.player);
+            play_team_buzz(obj.team);
 		}
         else
         {
@@ -105,6 +106,9 @@ function connect_admin()
 		need_reconnect=true;
 	};
 }
+
+
+
 
 function reconnect()
 {

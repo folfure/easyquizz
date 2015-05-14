@@ -1,15 +1,37 @@
 
-body {
-  color: #ddd; 
-  background-color: #444;
+@font-face {
+    font-family: Raleway;
+    src: url(/static/css/Raleway-SemiBold.ttf);
+}
+
+@font-face {
+    font-family: Budmo;
+    src: url(/static/css/budmo_jiggler.ttf);
+}
+
+@font-face {
+    font-family: ScoreFont;
+    src: url(/static/css/alarm_clock.ttf);
 }
 
 
+
+body {
+  color: #ddd; 
+  background-color: #444;
+  font-family: Raleway,Verdana;
+}
 
 body, html
 {
 	height:100vh;
 	max-height:100vh;
+}
+
+
+body.screen
+{
+	background-color:#222;
 }
 
 .noselect {
@@ -28,7 +50,8 @@ body, html
 
 #slides
 {
-
+	z-index:4;
+	position:relative;
 }
 .controls
 {
@@ -36,10 +59,13 @@ body, html
 	background-color: black;
 }
 
+
+
+
 .control-button
 {
 	border-radius: 4px;
-	background:#555;
+	background:#555;t
 	padding:0px;
 	cursor:pointer;
 	-webkit-user-select: none;
@@ -47,6 +73,26 @@ body, html
 	-khtml-user-select: none;
 	-ms-user-select: none;
 }
+
+#current_player
+{
+	left:50%;
+	margin-left:-50vw;
+	top:50%;
+	margin-top:-50vw;
+	
+
+	background-color: rgba(0,0,0,0.9);
+	position:absolute;
+	text-align: center;
+	width:100vw;
+	height:100vh;
+	line-height:100vh;
+	font-size:20vh;
+	z-index:1000;
+	text-shadow: 0px 5px 5px #0040A6;
+}
+
 
 #current_answer
 {
@@ -63,10 +109,13 @@ body, html
 	color:yellow;
 }
 
-@font-face {
-    font-family: ScoreFont;
-    src: url(/static/css/alarm_clock.ttf);
+
+#scores
+{
+	z-index:5;
+	position:relative;
 }
+
 .score
 {
 	font-family:ScoreFont;
@@ -79,15 +128,61 @@ body, html
 }
 
 
+@-webkit-keyframes zoom {
+    from {
+    	-webkit-transform: scale(1,1);
+    }
+    to {
+    	-webkit-transform: scale(1.5,1.5);
+    }
+}
+
+/* Standard syntax */
+@keyframes zoom {
+   from {
+        transform: scale(1,1);
+   }
+   to {
+        transform: scale(1.5,1.5);
+   }
+}
+
+
+
+
+.huge
+{
+	font-size:60vh;
+	line-height: 60vh;
+	font-family:Raleway;
+	color:white;
+
+	text-shadow: 0px 0px 10px #0040A6,
+      0px 0px 10px #A60008;
+    text-shadow: 20px -20px 0px #0040A6,
+                 40px -40px 0px #A60008,
+                 60px -60px 0px #00bdbd;
+      text-shadow: 0px 20px 0px #0040A6,
+             0px 14px 10px rgba(0,0,0,0.60),
+             0px 24px 2px rgba(0,0,0,0.40),
+             0px 34px 30px rgba(0,0,0,0.40);
+    -webkit-animation: zoom 20s; /* Chrome, Safari, Opera */
+    animation: zoom 20s;
+
+
+    
+}
 .slide_text
 {
-	/*position:absolute;*/
+	position:relative;
 	z-index:1;
 	max-height:100vh;
 	/*min-height:100vh;*/
 	text-align: center;
-	vertical-align: middle;
+	vertical-align : middle;
 	font-size:35pt;
+	top:5vh;
+	text-shadow: 0px 2px 2px #000;
 }
 
 .resume .slide_text
@@ -98,6 +193,7 @@ body, html
 	text-align: center;
 	vertical-align: middle;
 	font-size:15pt;
+	text-shadow:none;
 }
 
 .resume .slide_video
@@ -139,13 +235,14 @@ body, html
 
 .slide_image
 {
-	/*position:absolute;*/
+	position:relative;
 	z-index:0;
     max-height:80%;
     max-width:100%;
     height:auto;
     width:auto;
     overflow: hidden;
+    top:5vh;
 }
 
 
@@ -172,6 +269,28 @@ body, html
 	z-index:0;*/
 }
 
+.title
+{
+	font-family: Budmo,Verdana;
+	text-shadow: 10px 10px 5px #0040A6,
+      0px 0px 10px #0040A6;
+    font-size:35vh;
+    position:relative;top:38vh;
+    overflow:hidden;
+
+}
+ .section_title
+ {
+ 	font-family: Budmo,Verdana;
+	text-shadow: 10px 10px 5px #0040A6,
+      0px 0px 10px #0040A6;
+    font-size:30vh;
+    position:relative;top:50;
+    line-height:35vh;
+        -webkit-animation: zoom 100s; /* Chrome, Safari, Opera */
+    animation: zoom 100s;
+ }
+
 
 a.question:link, a.question:visited { 
     color: grey;
@@ -187,13 +306,24 @@ a.cur_question:link
 	color:yellow;
 }
 
+
 .buzz
 {
-	border-radius: 50px;
+	border-radius: 200px;
 	border-style: solid;
-	border-color:white ;
-	border-width:5px;
-    
+	border-width:20px;
+	text-align: center;
+	vertical-align: middle;
+	line-height: 200px;
+    font-size: 6.0rem;
+    font-weight:bolder;
+    background-color: #B03D3B;
+    border-color: #8E312F; 
+    width:200px;
+    color:white;
+    text-shadow: 0 1px 0 #ccc, 0 2px 0 #c9c9c9, 0 3px 0 #bbb, 0 4px 0 #b9b9b9, 0 5px 0 #aaa, 0 6px 1px rgba(0,0,0,.1), 0 0 5px rgba(0,0,0,.1), 0 1px 3px rgba(0,0,0,.3), 0 3px 5px rgba(0,0,0,.2), 0 5px 10px rgba(0,0,0,.25), 0 10px 10px rgba(0,0,0,.2), 0 20px 20px rgba(0,0,0,.15);
+    text-shadow: 0px 0px 2px #fff,
+      0px 0px 5px #fff;
 }
 #buzz .inactive
 {
@@ -300,6 +430,44 @@ input.je-dis-non
 	margin-bottom: 1.5rem;
 	font-size:3.5rem;
 	
+}
+
+
+.screen_score_row
+{
+	background-color: #222;
+	margin:0;
+	padding:0;
+		text-shadow: 0px 2px 2px #000;
+}
+
+
+.screen_team_name_1
+{
+	text-align:center;
+	font-size:30pt;
+	color:white;
+	background-color:#A60008;
+}
+
+.screen_team_name_2
+{
+	text-align:center;
+	font-size:30pt;
+	color:white;
+	background-color: #0040A6;
+}
+.screen_score
+{
+
+	font-family:ScoreFont;
+	font-size:40pt;
+	color:white;
+	/*background-color: black;*/
+
+	text-align:center;
+	margin-top:-10px;
+	margin-bottom:-10px;
 }
 
 

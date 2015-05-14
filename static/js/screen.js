@@ -37,14 +37,28 @@ function connect_screen()
 		addToLog(logMessage);
 	};
 	socket.onmessage = function (event) {
+		$('#current_player').hide();
 		var obj = JSON.parse(event.data);
 		if (obj.type=='info')
 		{
 			addToLog(obj.msg);
 		}
-		else if (obj.type='update_html')
+		else if (obj.type=='update_html')
 		{
 			update_html(obj.data);
+		}
+		else if (obj.type=='play')
+		{
+			play_playable();
+		}
+		else if (obj.type=='pause')
+		{
+			pause_playable();
+		}
+		else if (obj.type=='buzzed')
+		{
+            show_player(obj.player);
+            play_team_buzz(obj.team);
 		}
 	};
 	socket.onerror = function () {
@@ -82,6 +96,23 @@ function connect_screen()
 	};
 }
 
+
+function pause_playable()
+{
+    $('.playable').get(0).pause();
+}
+
+function play_playable()
+{
+	$('.playable').get(0).play();
+}
+
+function show_player(player)
+{
+	$('#current_player').html(player);
+	$('#current_player').show();
+}
+
 function reconnect()
 {
 	if (need_reconnect==true)
@@ -95,10 +126,14 @@ function reconnect()
 		}
 	}
 }
-
+function play_team_buzz(team)
+{
+	$('#sound_'+team).get(0).play();
+}
 
 
 $(function() {
-	connect_screen();	
+	$('#current_player').hide();	
+	connect_screen();
 
 });

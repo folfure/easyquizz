@@ -14,6 +14,10 @@
     src: url(/static/css/alarm_clock.ttf);
 }
 
+@font-face {
+    font-family: MKAbel;
+    src: url(/static/css/MKAbel.ttf);
+}
 
 
 body {
@@ -162,7 +166,7 @@ body.screen
     text-shadow: 20px -20px 0px #0040A6,
                  40px -40px 0px #A60008,
                  60px -60px 0px #00bdbd;
-      text-shadow: 0px 20px 0px #0040A6,
+      text-shadow: 0px 20px 0px #e67d24;,
              0px 14px 10px rgba(0,0,0,0.60),
              0px 24px 2px rgba(0,0,0,0.40),
              0px 34px 30px rgba(0,0,0,0.40);
@@ -176,6 +180,8 @@ body.screen
 {
 	position:relative;
 	z-index:1;
+	margin-left: 3vh;
+	margin-right: 3vh;
 	max-height:100vh;
 	/*min-height:100vh;*/
 	text-align: center;
@@ -274,17 +280,19 @@ body.screen
 	font-family: Budmo,Verdana;
 	text-shadow: 10px 10px 5px #0040A6,
       0px 0px 10px #0040A6;
-    font-size:35vh;
-    position:relative;top:38vh;
+    font-size:30vh;
+    position:relative;top:30vh;
     overflow:hidden;
 
 }
  .section_title
  {
+ 	color:white;
  	font-family: Budmo,Verdana;
-	text-shadow: 10px 10px 5px #0040A6,
-      0px 0px 10px #0040A6;
-    font-size:30vh;
+	text-shadow: 5px 5px 5px #e67d24,
+      0px 0px 20px #e67d24;
+      text-transform: uppercase;
+    font-size:20vh;
     position:relative;top:50;
     line-height:35vh;
         -webkit-animation: zoom 100s; /* Chrome, Safari, Opera */
@@ -444,18 +452,20 @@ input.je-dis-non
 
 .screen_team_name_1
 {
+	text-transform: uppercase;
 	text-align:center;
 	font-size:30pt;
-	color:white;
-	background-color:#A60008;
+	color:#e67d24;
+	/*background-color:#A60008;*/
 }
 
 .screen_team_name_2
 {
+	text-transform: uppercase;
 	text-align:center;
 	font-size:30pt;
-	color:white;
-	background-color: #0040A6;
+	color:#fcde07;
+	/*background-color: #0040A6;*/
 }
 .screen_score
 {

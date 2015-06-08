@@ -292,8 +292,11 @@ class Game(object):
         for player in self.sockets:
             team = self.players[player]
             self.publish_player(player, type='update_html', data={'scores':TEMPLATES.load("scores.html").generate(scores=scores, team=team)})
-        self.publish_admin(type='update_html', data={'scores':TEMPLATES.load("scores_admin.html").generate(scores=scores, team="")})
-        self.publish_screen(type='update_html', data={'scores':TEMPLATES.load("scores_screen.html").generate(scores=sorted(scores,key=lambda it:it[1]), team="")})
+        self.publish_admin(type='update_html', data={'scores':TEMPLATES.load("scores_admin.html").generate(scores=sorted(scores,key=lambda it:it[1]), team="")})
+        if len(scores) > 2:
+            self.publish_screen(type='update_html', data={'scores':TEMPLATES.load("scores.html").generate(scores=scores, team="")})
+        else:
+            self.publish_screen(type='update_html', data={'scores':TEMPLATES.load("scores_screen.html").generate(scores=sorted(scores,key=lambda it:it[1]), team="")})
     
     # Notifies admin with team composition.
     def notify_teams_composition(self):
@@ -521,7 +524,7 @@ class LoginHandler(BaseHandler):
             print kwargs
             if self.current_admin :
                 GAME.socket_admin_disconnected()                
-                self.redirect('/admin')
+                self.redirect('/apo')
             else:
                 self.write(TEMPLATES.load("login.html").generate(title=TITLE, 
                             post_url='/login/admin', password_display='block', name_display='none'))
@@ -538,14 +541,14 @@ class LoginHandler(BaseHandler):
 
     def post(self,*args,**kwargs):
         #to do secure
-        if '/admin' in args:
+        if '/apo' in args:
             error = GAME.set_admin()
             if error:
                 #to do add error div in all pages
                 self.redirect('/login/admin?errid=5')
                 return
             self.current_admin = '1'
-            self.redirect('/admin')
+            self.redirect('/apo')
         else:
             player=self.get_argument("name")
             self.set_secure_cookie("user", player)
@@ -565,7 +568,7 @@ class GameHandler(tornado.web.RequestHandler):
             team_name = self.get_argument("team_name")
             GAME.add_team(team_name)
             print "new_team",team_name
-            self.redirect('/admin')
+            self.redirect('/apo')
 
 
 # Called when players connects to ipaddress. Either he never connects and he is redirected to /login.
@@ -755,7 +758,7 @@ app = tornado.web.Application([
                                 (r'/screenws', WebSocketScreenHandler), 
                                 (r'/login(.*)', LoginHandler), 
                                 (r'/quizz',  HTMLQuizzHandler ),
-                                (r'/admin',  AdminHandler ),
+                                (r'/apo',  AdminHandler ),
                                 (r'/game(.*)',  GameHandler ),
                                 (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "static"}),
                                 (r"/questions/(.*)", tornado.web.StaticFileHandler, {"path": "questions"}),

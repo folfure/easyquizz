@@ -1,5 +1,7 @@
 {%for team, sound in sounds %}
+{%if team!='unassigned'%}
 <audio id="sound_{{team}}">
         <source src="/static/sound/{{sound}}" type="audio/mp4">
 </audio>
+{% end %}
 {% end %}

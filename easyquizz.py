@@ -524,7 +524,7 @@ class LoginHandler(BaseHandler):
             print kwargs
             if self.current_admin :
                 GAME.socket_admin_disconnected()                
-                self.redirect('/apo')
+                self.redirect('/admin')
             else:
                 self.write(TEMPLATES.load("login.html").generate(title=TITLE, 
                             post_url='/login/admin', password_display='block', name_display='none'))
@@ -541,14 +541,14 @@ class LoginHandler(BaseHandler):
 
     def post(self,*args,**kwargs):
         #to do secure
-        if '/apo' in args:
+        if '/admin' in args:
             error = GAME.set_admin()
             if error:
                 #to do add error div in all pages
                 self.redirect('/login/admin?errid=5')
                 return
             self.current_admin = '1'
-            self.redirect('/apo')
+            self.redirect('/admin')
         else:
             player=self.get_argument("name")
             self.set_secure_cookie("user", player)
@@ -568,7 +568,7 @@ class GameHandler(tornado.web.RequestHandler):
             team_name = self.get_argument("team_name")
             GAME.add_team(team_name)
             print "new_team",team_name
-            self.redirect('/apo')
+            self.redirect('/admin')
 
 
 # Called when players connects to ipaddress. Either he never connects and he is redirected to /login.
@@ -758,7 +758,7 @@ app = tornado.web.Application([
                                 (r'/screenws', WebSocketScreenHandler), 
                                 (r'/login(.*)', LoginHandler), 
                                 (r'/quizz',  HTMLQuizzHandler ),
-                                (r'/apo',  AdminHandler ),
+                                (r'/admin',  AdminHandler ),
                                 (r'/game(.*)',  GameHandler ),
                                 (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "static"}),
                                 (r"/questions/(.*)", tornado.web.StaticFileHandler, {"path": "questions"}),

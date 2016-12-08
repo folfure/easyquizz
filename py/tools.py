@@ -269,10 +269,11 @@ class QuizzPlayer(object):
                                 logger.debug(( "question name %s is not supported. Please correct"%sub_item))
                                 continue
                             order, pts_gr, points, sname, qtype = groups = name_match.groups()
-                            # logger.debug( order, pts_gr, points, sname, qtype)
+                            print  order, pts_gr, points, sname, qtype
                             qtype = qtype.lower()
                             qtyp = get_q_type(qtype)
                             if not qtyp:
+                                print sub_item,qtype
                                 logger.debug( qtype, "not supported")
                                 continue
 
@@ -317,15 +318,15 @@ class QuizzPlayer(object):
     def get_current_content(self):
         if self.section_id == -1:
             return '''<div style="max-height:100vh;-webkit-animation: zoom 100s;animation: zoom 100s;"><center>
-        <img  src="/static/img/shadow.jpg"/>
+        <img  src="/static/img/zieben.png"/>
     </center></div><audio id="sound_section">
         <audio autoplay>
         <source src="/static/sound/justice.mp3" type="audio/mp4">
     </audio>
             '''
             return '''<div style="max-height:100vh">
-                        <div id="slide" class="slide_text title">
-                            <center>BIG BUZZ</center>
+                        <div id="slide" class="slide_text huge" style="font-size:20pt">
+                            <center>MWIZZY BUZZ</center>
                         </div>
                         <div style="position:relative;top:-45vh">
                     '''+VIDEO_SLIDE%('','','/static/sound/aerobic.mp4')+"</div></div>"

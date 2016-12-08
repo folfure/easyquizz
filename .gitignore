@@ -1,4 +1,9 @@
 .DS_Store
 .pyc
 *.pyc
-questions/*
+questions
+questions2
+questions3
+questions4
+questions5
+static/img/wall

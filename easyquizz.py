@@ -14,7 +14,7 @@ import sqlite3
 import time
 import thread
 
-TITLE ='BIG BUZZ'
+TITLE ='MWIZZY BUZZ'
 TEMPLATES = tornado.template.Loader("static/template")
 TEAM_SOUNDS = ["buzz.mov", "buzz-2.mov"] 
 class Game(object):
@@ -295,7 +295,8 @@ class Game(object):
         self.publish_admin(type='update_html', data={'scores':TEMPLATES.load("scores_admin.html").generate(scores=sorted(scores,key=lambda it:it[1]), team="")})
         if len(scores) > 2:
             self.publish_screen(type='update_html', data={'scores':TEMPLATES.load("scores.html").generate(scores=scores, team="")})
-        else:
+        elif len(scores) == 2:
+            print scores
             self.publish_screen(type='update_html', data={'scores':TEMPLATES.load("scores_screen.html").generate(scores=sorted(scores,key=lambda it:it[1]), team="")})
     
     # Notifies admin with team composition.

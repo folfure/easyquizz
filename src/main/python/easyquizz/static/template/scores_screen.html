@@ -1,0 +1,8 @@
+
+ <div class="row screen_score_row">   
+      <div class="columns four screen_team_name_1">{{escape(scores[0][1]) if scores else ''}}</div>
+      <div class="columns two screen_score">{{scores[0][0] if scores else '' }}</div>
+      <div class="columns one"></div>
+      <div class="columns two screen_score">{{scores[1][0] if scores else '' }}</div>
+      <div class="columns four screen_team_name_2">{{escape(scores[1][1]) if scores else ''}}</div>
+</div>
